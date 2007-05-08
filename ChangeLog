@@ -1,0 +1,218 @@
+(Version 1.11.1pre3 - 7/5/07)
+- The width of the popup window can be set using the commandline -popup_size=[width-in-pixels] option.  490 works for me.  This is provided to fix a gtk bug that prevents you from setting the width of a wrapped text box in characters.
+- BUGFIX: Hopefully now works with Compiz/Beryl et al, thanks to patch provided by Stuart Naifeh
+- BUGFIX: The full email text is now displayed when requested, as opposed to the first snippet (the text body is provided in multiple chunks.  Some, but not all, of these are quoted text)
+- Some other minor fixes regarding hosted domains
+
+(Version 1.11 - 17/3/07)
+- New Feature: Display the full text of messages.  Clicking on the message title retrieves the full text of the message and displays it inline.  Clicking on the message title again will toggle the display of the brief text and full text.  (This marks checkgmail's first foray into the murky world of Gmail's datapack ...  thanks once again to that invaluable resource of LiveHTTPHeaders for making this reverse engineering simple!)
+- All text now defined implicitly as black text (temporary fix for people with inverse themes)
+- Lots of new translations: Hungarian, Simplified Chinese, Russian, Tamil, Czech, Slovak, Norwegian and Portugues Brasil ...
+
+(Version 1.10.2pre2 - 21/12/06)
+- Possible fixes for hosted domains: incorrect logins now get caught and a http/https typo was fixed.  Seems to work on a subset of hosted domains at least.  If you're using this version, please provide feedback!  Thanks ...
+
+(Version 1.10.1 - 28/10/06)
+- New feature: The number of messages can be sent to scripts run on mail arrival by using %m in the command
+- Slight change in translation handling code: the version of the user translations is now checked against the program version, and if the user translations are up-to-date language keys can be modified even if they exist in the default preferences
+- BUGFIX: If version 1.10 was started when no network connection was present, checkgmail got caught in an infinite loop when trying to log in, with predictably disasterous consequences ... :(  This has been fixed by adding a 30 sec sleep period between trying to connect
+- BUGFIX: Messages with <> tags in the header weren't displayed correctly if the tag wasn't compatible with Pango
+- BUGFIX: Mail order sort changed so that newest messages are displayed first
+- BUGFIX: Really fixed proxy support this time!
+- New Translation: Japanese (Satoshi Tanabe)
+- New Translation: Romanian (Marius Mihai)
+- Updated translations
+
+(Version 1.10 - 10/9/06)
+- New feature: Labels to be checked and associated delays are now set and edited via the preferences.  The command-line option to set labels and delays present in 1.10pre1 has been removed.
+- Preferences dialogue reordered
+- Slight changes to translation handling code
+- BUGFIX: prefs.xml was not saved as UTF-8 even when the language name contained unicode chars, causing the XML to be misformed and the program to crash on the next run.  Added explicit code to force unicode format when writing prefs
+- BUGFIX: Proxy support fixed: removed explicit proxy code that was causing problems, as we're using HTTPS proxies here (which cannot use an explicit declaration in the code, but only uses the HTTPS_PROXY environment variable)
+- BUGFIX: CheckGmail no longer erroneously reports "401: Unauthorised" when unable to connect to Gmail at login
+
+(Version 1.10pre2 - 30/8/06)
+- BUGFIX: Google seems to have changed the hosted domain login form from www.google.com/hosted/[domain] to www.google.com/a/[domain] ...  I've adapted the hosted login method to reflect this, but that "a" sub-domain scares me a bit - will other hosted accounts start with other alphabetical letters?  It's not impossible to catch this, but it's a bit of a pain ...  So please let me know if things aren't working.  Note that the no_cookies method isn't working at the moment with hosted accounts, and it may never do so again ...
+
+(Version 1.10pre1 - 26/8/06)
+- New feature: Ability to check labels for new mail.  Internal mail notification/checking routines completely rewritten to allow this.  Some major changes:
+	* A global array @messages is now used to store the details of new messages.  The check rountine is called for each label, and removes previous messages for that label from @messages, adds the new messages found back to @messages, and calls the popup display routines if any of those messages is a new message based on the author and timestamp.
+	* The popup display then sorts and displays all messages.  Duplicates (i.e. a message having more than one label) are removed by screening for message_id.
+	* Clicking on an action (including "Open") for a message prompts an immediate check of the label that the message came from after the action has been carried out. 
+	- To use the label-checking feature at this stage, use the command-line option -label=label,check_time_in_seconds ... you only need to set this once for each label, and the settings for that label will be stored in the prefs.  A GUI configuration tool is fully intended for the release of 1.10, but at this stage the only way to remove a label is to edit the pref file XML.
+- New feature: Ability to set and change the delay for the display of the popup dialogue.  The new version uses a default setting of 250ms, which emulates standard tooltip behaviour; however, this can be changed by using the -popup_delay=[milliseconds] command-line switch.  The old behaviour is of course emulated by -popup_delay=0.
+- Switch to XML prefs format: old ~/.checkgmail/prefs is now ~/.checkgmail/prefs.xml  Prefs reading and writing routines have also been changed.  The switch enables us (with difficulty!) to incorporate more complex constructs in the prefs - in this case, the custom delays associated with checking labels.
+- New translation: Swedish (Johan Gustafsson)
+
+(Version 1.9.3 - 15/7/06)
+- New feature: CheckGmail can now check Gmail hosted accounts.  Setup a new profile, and use the -hosted=[hosted-domain] the first time you run it (the -hosted flag is not required for subsequent runs).  E.g.  Your gmail-hosted domain is "test.net" - run checkgmail with -hosted=test.net - simple, huh?  All features work, except that left-clicking the icon, "Open" and "Compose mail" functions will take you to a login page in your web browser if you're not currently logged in.  Sorry, but Gmail hosted domains use a different, two-step login method, and there's no way (as far as I know - I'm open to suggestions) to log in directly with a GET request.  (One could posssibly do a POST followed by a GET - but that's rather cumbersome ...)
+- New translation: Slovenian (Matic Ahacic)
+- New translation: Portugese (Fernando Pereira)
+
+(Version 1.9.3pre1 - 18/6/06)
+- BUGFIX: New Gmail accounts use a strange javascript/meta-refresh redirect when logging in, generating the annoying 401: Unauthorised error (LWP does not follow these redirects, so checkgmail could only login half-way).  This issue only affected recently created accounts as far as I can tell - old accounts *still use* the old method!?  In anycase, the redirect is now screened for, parsed and followed.  Note that the login time is a little longer this way - but blame Google, not me!  (and if you're thinking that using two different login methods for the same service is kinda wierd and dodgy, well, you're not the only one!)
+- Internal changes to Atom feed retrieval, preparing the way for checking multiple labels (this isn't available yet, but will be soon)
+- New translation: Catalan (Jordi Sanfeliu)
+
+(Version 1.9.2 - 13/5/06)
+- BUGFIX: Default translations overwrote user-customised translations, even if they were default English translations.
+- Changes to RPM build to remove the RPM autodependency code (it was picking up Perl modules that are optional, not required)
+- Updates to translations
+
+(Version 1.9.1 - 13/5/06)
+- Translation updates and slight change to translation updating code
+
+(Version 1.9.1pre3 - 12/5/06)
+- New feature: "Mark all as read" link in popup window - clicking this will mark all new messages (i.e. the first 20 messages, which is all that the Gmail Atom feed displays) as read
+- "Undo last action" subroutine was re-written so that bulk actions such as the above "Mark all as read" may be undone
+
+(Version 1.9.1pre2 - 11/5/06)
+- New feature: "Archive also marks as read" option in preferences.  When this is set, clicking "Archive" will also mark the message as read
+
+(Version 1.9.1pre1 - 10/5/06)
+- Added GUI error dialogue on startup if modules not found
+- BUGFIX: SIGALRM catcher now restarts mail-checking timer
+
+(Version 1.9 - 8/5/06)
+- Added "mail-message-new" 16x16 icon from the Tango project (http://tango-project.org) as an icon for the "Compose mail" function in the right-click menu
+- If a translation in the default translations differs to the local lang.xml, lang.xml is updated to match the default
+- Added "About" icon to right-click menu
+- General code tidying
+- Added patch from Dafydd Jones to search for the first ethernet MAC address present for passphrase generation - useful for those users without an eth0 network setup
+- `which kwallet` now doesn't print stderr messages to command line
+- BUGFIX: All mail operations now stay underlined until the operation is complete
+
+(Version 1.9pre1 - 1/5/06)
+- New feature: Added Delete operation to message display window
+- New feature: Added Compose button to popup menu
+- New feature: Added automatic login to Gmail when left-clicking the tray icon
+- SIGTERM is caught and sent to program exit subroutine - allows checkgmail to logout if killed by another process
+- SIGALRMs are now caught by the program and will not cause program termination
+- BUGFIX: Memory leak when displaying windows corrected
+
+(Version 1.8 - 26/4/06)
+- New feature: Message display interface re-written to allow specific operations for each new email (see below).  Window display is tidier and neater; operation is smoother.
+- New feature: The ability to open a message directly in a web browser is supported regardless of the login method.  When using this function, CheckGmail automatically logs into Gmail in your browser and displays the message
+- New feature: If using the (now default) cookie login method, several other functions are also provided: currently supported methods are "Mark as read", "Archive" and "Report Spam"
+- New feature: interface with KDE wallet, using a patch and helper application written by Jochen Hoenicke (password is stored in KDE wallet database rather than text file)
+- Cookie login now default method (use -no_cookies as a command line option to use the old method): allows various Gmail actions to be carried out on messages.  If using this method, CheckGmail now logs out of Gmail when exiting
+- Animated new mail alert not displayed if mail popup window already displayed (no need to be alerted if you can already see the information!)
+- Status messages ("Checking Gmail") now appear within the new mail popup when that popup is visible
+- Message display has a scroll bar if the window won't fit on screen
+- Languages now sorted by alphabetical order in Preferences dialogue
+- Preferences "Web browser" option re-written to better describe the function
+- HTTP request thread re-written to handle both GET and POST methods (we use the POST method with the Gmail interface when using Cookies)
+- Removed old, deprecated tooltip interface
+- BUGFIX: Incorrect logins using the cookie login method are now caught and handled properly
+- BUGFIX: Cookie login address updated to the new Google form address
+- Some general code tidying
+- New translation: Dutch (Dennis van der Staal)
+
+(Version 1.7.2 - 1/4/06)
+- BUGFIX: Changing the mail check delay did not come into effect until the program was restarted
+- BUGFIX: More UTF-8 compatibility changes to fix strange, occasional bug with Encode.pm - we now don't use the utf8 pragma and don't use the ":encoding" settings when opening files ... apparently this works!
+- New translation: Polish (Marek Drwota)
+
+(Version 1.7.1 - 30/3/06)
+- New feature: -cookie_login command-line option.  This gets around the recent Error 503: Service Unavailable problem by logging on using the web form and storing the associated login cookie.  With the cookie present, Atom feeds can be read without authorisation - and this service seems to work at the moment (it's the authorisation process that has been causing problems with Atom feeds).  Note that this causes a slightly slower start-up as more data has to be sent from the server, but once up and running there's no extra bandwidth used (in fact, there's slightly less)
+- New feature: -private command-line option hides details of messages in popups: with this option enabled, checkgmail will simply display the number of new messages.  Combine with a setting of 0 secs for the popup display time (in the preferences) to completely hide details of authors and opening lines of email
+- Conversion to UTF-8 encoding for translations
+- Translation file handling now checks for added languages if a user lang.xml file exists ... if a new language is present in the default hardcoded list, this will be added to the user's lang.xml file
+- New translation: French (Jean-Baptiste Denis)
+- New translation: German (Jochen Hoenicke)
+- New translation: Croatian (Melita Ivkovic)
+- New translation: Finnish (Poika Pilvimaa)
+- New translation: Spannish (Alvaro Arenas)
+
+(Version 1.7 - 26/2/06)
+- New feature: Support for checking multiple gmail accounts through running another instance of checkgmail with the --profile=[profile_name] CLI switch.  This uses a preferences file called prefs-[profile_name]  
+- BUGFIX: Program would not start for new users (tried to show preferences before translations were read!)
+
+(Version 1.6 - 22/2/06)
+- New feature: Support for multiple languages.  Translations are saved to the file ~/.checkgmail/lang.xml.  Special thanks to Sandro Tosi for the Italian translation and Rune Maagensen for the Danish translation
+- New feature: Preference option to display time in 24 hour clock format (thanks to Rune Maagensen for implementing this)
+- CheckGmail now saves the password in plain text by default if Crypt::Simple not found/not working, thus removing any requirement for those packages
+- New CLI option: -nocrypt forces passwords to be saved unencrypted and will prevent the incorporation of Crypt::Simple and related modules regardless of their prescence on the system
+- Major re-write of the checking code to move from a single-threaded application to multiple threads.  In this implementation, all HTTP requests are handled by a slave thread, meaning that HTTP requests are no longer blocking for the GUI (notably, for times when the Gmail server is down and the request times out)
+- Tooltips are now automatically reshown if the text changes while displayed
+- Configuration data has been moved from ~/.checkgmail to ~/.checkgmail/prefs - the program will automatically migrate old config files to the new format for users upgrading from old versions
+- Silent is now the default operation mode; a new switch (-v or -verbose) has been added to display checking information on the command-line.  The old -silent switch is still retained for backwards compatibility
+
+(Version 1.5.1 - 18/1/06)
+- BUGFIX: regexp to catch '&' sequences now correctly leaves HTML escape codes intact (all '&'s were changed before)
+
+(Version 1.5 - 17/1/06)
+- New feature: Basic proxy support.  Simply set the environment variable HTTP_PROXY (eg 'export HTTP_PROXY="http://proxy:port"') and CheckGmail will use that proxy server
+- New feature: Command line arguments: the -silent switch is now supported, which will prevent CheckGmail from printing any information on the command line (thanks to Sandro Tosi for suggesting this)
+- CheckGmail now works better when Crypt::Simple is not found
+- Some code tidying
+- Manpage now included in archive
+- BUGFIX: '&' characters hopefully fixed (again!) - this is a better solution that checks that any spurious '&' is part of an HTML escape sequence; if it isn't, it's replaced with '&amp;'
+
+(Version 1.4 - 12/9/05)
+- New feature: "Command to execute for no mail" runs a command when there are nolonger unread mail messages (thus allows a laptop mail led to be switched off, etc)
+- Preferences dialogue reworked
+- BUGFIX: regexp that checked author names now uses quoting delimiters (allows email addresses to have parentheses and other special characters)
+
+(Version 1.3 - 23/7/05)
+- New feature: "Command to execute on new mail" allows the user to specify any command that will be run when new mail is received (e.g. playing a sound)    
+- Username and password are now sent in URI escape codes, thus allowing usernames and passwords to contain non-alphanumeric characters (thanks to Leonardo Ribeiro for suggesting this)
+- "Web browser" setting in preferences now allows the use of '%u' as a substitute for the Gmail address - thus to open a new tab with the Gmail web address when left-clicking the icon, use the string "firefox -remote 'openURL(%u,new-tab)'".  (Thanks to Alvaro Arenas for suggesting this)  The setting defaults to the previous behaviour, "[command] %u", if the %u signal is not present
+- If there is no body to the email, "(no text)" is shown instead of the XML hash reference that was displayed before
+
+(Version 1.2 - 16/7/05)
+- Encryption packages are no longer required for CheckGmail to run - if any packages are not present or if encryption fails, the ability to save passwords is simply disabled
+- Gtk 2.6 and associated Gtk2-perl bindings are no longer required for CheckGmail to run - if Gtk2-perl bindings are < 2.6, the code to change the button images is disabled
+- BUGFIX: Popup message handling code introduced in 1.1.2 now applies to all popups
+
+(Version 1.1.2 - 26/6/05)
+- Custom icons are now loaded correctly again (broken in v1.1)
+- Better markup handling - checkgmail now only replaces '&' and '...', pango markup seems to cover all other HTML options nicely
+- Better popup message handling when tray icon is at the bottom of the screen (the choice of whether the message pops up or down is dependant on whether the icon is below or above half the screen height)
+
+(Version 1.1.1 - 22/6/05)
+- Tray icon now has a border again
+- Kludgy hack to catch any errant '&'s in popup text - Pango markup chokes on some of these
+- Added more module loading in the startup and a specific eval routine to try to catch errors with Debian's verion of Crypt::Simple
+
+(Version 1.1 - 21/6/05)
+- Gmail quietly and annoyingly changed their Atom feed address - it is now at https://mail.google.com/mail/feed/atom ... which caused the old address to return "401: Unauthorized" errors.  This is now fixed and the Atom feed address is changeable in the prefs (hopefully it won't change again!!)
+- The web address for Gmail (still hardcoded) has now also been updated to the "mail.google.com" format.  Apparently Google have set about taking the G out of Gmail ...
+- Slight changes to initial configuration startup code - allows tray bg colour and icons to be set at first use, and first-time login to work correctly
+
+(Version 1.0 - 28/5/05)
+- New mail notification text is by author ("New mail from Foo Bar ...")
+- Popup notification is only for new unread messages - messages are tracked by time stamp
+- Messages without subject display "(no subject)" rather than ugly hash reference
+- New preferences option to set the length of time new mail popups are displayed for (set to 0 to disable the animated popup messages)
+- Changes to the internal passphrase used for saving login password no longer die horribly, but are caught in an eval routine and the user is prompted to re-login
+- ifconfig path is found through whereis, then defaults to the path - allows ifconfig to be in /sbin/ (as is usually the case, and which is not normally in the user's path)
+- General code tidying
+
+(Version 0.9.6 - 23/5/05)
+- Bug fix: filehandle opening web browser was blocking - browser command is now backgrounded
+- Changed the layout of the preferences dialogue
+- Nicer default error icon
+
+(Version 0.9.5 - 22/5/05)
+- Embedded PNG icon data - the perl script is now fully standalone (thanks to dorphell for giving me the tip about uuencoding PNG data)
+- Notification icons are customisable in the preferences
+- Left click on tray icon opens a webbrowser (default = firefox, but customisable in the preferences) with the Gmail page (https://gmail.google.com/gmail)
+
+(Version 0.9.1 - 16/5/05)
+- Minor bug fix in calculating popup display position
+
+(Version 0.9 - 15/5/05)
+- Tooltips replaced with popup windows with rich text
+- Much nicer text formatting for popup messages
+- Automatic notify animation above/below tray icon
+- Default check time is now 120 seconds (the same as the official Windows notifier)
+
+(Version 0.8 - 7/5/05)
+- Unauthorised login errors detected - user is prompted with a login dialogue
+- Time of last check displayed in tooltip
+- Error messages fully described in tooltips
+- Better startup/event processing
+
+(Version 0.7 - 1/5/05)
+- Initial public release
