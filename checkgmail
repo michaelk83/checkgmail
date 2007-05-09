@@ -1600,6 +1600,21 @@ sub undo_last {
 	queue_check();
 }
 
+sub get_screen {
+	# get screen resolution
+	my $monitor = $eventbox->get_screen->get_monitor_at_point($boxx,$boxy);
+    	my $rect = $eventbox->get_screen->get_monitor_geometry($monitor);
+	my $height = $rect->height;
+	
+	# support multiple monitors (thanks to Philip Jagielski for this simple solution!)
+	my $width;
+	for my $i (0 .. ($eventbox->get_screen->get_n_monitors-1)) {
+		$width += $eventbox->get_screen->get_monitor_geometry($i)->width;
+	}
+	
+	return ($monitor,$rect,$width,$height);
+}
+
 sub show_notify {
 	# We can only get the allocated width when the window is shown,
 	# so we do all this calculation in a separate subroutine ...
@@ -1611,10 +1626,7 @@ sub show_notify {
 	my $icon_height = $eventbox->allocation->height;
 	
 	# get screen resolution
-	my $monitor = $eventbox->get_screen->get_monitor_at_point($boxx,$boxy);
-    	my $rect = $eventbox->get_screen->get_monitor_geometry($monitor);
-	my $width = $rect->width;
-	my $height = $rect->height;
+	my ($monitor,$rect,$width,$height)=get_screen();
 	
 	# if the tray icon is at the top of the screen, it's safe to move the window
 	# to the previous window's position - this makes things look a lot smoother
@@ -1675,31 +1687,6 @@ sub show_notify {
 	
 	
 	($old_x, $old_y) = ($move_x,$move_y);
-	
-	# $reshow=0;
-	# print "end block\n";
-	
-	# # Enter/leave notification
-	# $win_notify->signal_connect('enter_notify_event', sub {
-		# $notify_enter = 1;
-	# });
-	# 
-	# $win_notify->signal_connect('leave_notify_event', sub {
-		# ### these four lines fix the XGL/Compiz problem where clicking on the links closes the notifier window
-		# my ($widget, $event, $data) = @_;
-		# if ($event->detail eq 'inferior') {
-			# return;
-		# }
-		# ###
-		# if ($reshow) {
-			# $reshow=0;
-			# return;
-		# }
-		# $notify_enter = 0;
-		# $notify_vis = 0;
-		# $win_notify->hide;
-	# });
-
 	
 	# Enter/leave notification
 	$win_notify->signal_connect('enter_notify_event', sub {
@@ -1770,11 +1757,8 @@ sub popup {
 	my $icon_height = $eventbox->allocation->height;
 	
 	# get screen resolution
-	my $monitor = $eventbox->get_screen->get_monitor_at_point($boxx,$boxy);
-    	my $rect = $eventbox->get_screen->get_monitor_geometry($monitor);
-	my $width = $rect->width;
-	my $height = $rect->height;
-	
+	my ($monitor,$rect,$width,$height)=get_screen();
+		
 	# show the window to get width and height
 	$popup_win->show_all;
 	my $popup_width=$popup_win->allocation->width;
