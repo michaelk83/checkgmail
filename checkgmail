@@ -886,6 +886,8 @@ sub check {
 		# ma is the attachment, if any
 		while ($atom =~ m/\["ma",\[(.*?)\]/g) {
 			my $att = $1;
+			$ma = "/mail/images/paperclip.gif"; # default attachment
+			# print "attachment =\n$att\n\n";
 			if ($att =~ m/src\\u003d\\\"(.*?)\\\"/g) {
 				$ma = $1;
 			}
