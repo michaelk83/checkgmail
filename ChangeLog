@@ -1,3 +1,4 @@
+- New Feature: Checkgmail now displays some information about attachments when the full text of the message is requested (limited to the first attachment in a message at present)
 - BUGFIX: support multiple monitors (thanks for Philip Jagielski for this fix)
 
 (Version 1.11.1pre3 - 7/5/07)

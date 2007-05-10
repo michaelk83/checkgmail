@@ -263,6 +263,7 @@ my $translations : shared;
 my %trans : shared;
 my $language : shared;
 my $HOME : shared;
+my $icons_dir : shared;
 my $gmail_at : shared;
 my $gmail_hid : shared;
 my $delay : shared;
@@ -333,6 +334,7 @@ $language = 'English';
 $HOME = (getpwuid($<))[7];
 my $gmail_web_address = "https://mail.google.com/mail";
 my $prefs_dir = "$HOME/.checkgmail";
+$icons_dir = "$prefs_dir/attachment_icons";
 my $prefs_file_nonxml = "$prefs_dir/prefs$profile";
 my $prefs_file = "$prefs_file_nonxml.xml";
 $gmail_address = $hosted ? "mail.google.com/hosted/$hosted/feed/atom" : "mail.google.com/mail/feed/atom";
@@ -369,6 +371,10 @@ unless (-d $prefs_dir) {
 		# User hasn't run an old version, just create the dir
 		mkdir($prefs_dir, 0777);
 	}
+}
+
+unless (-d $icons_dir) {
+	mkdir($icons_dir, 0777);
 }
 
 
@@ -775,7 +781,31 @@ sub http_get {
 		my $response = $ua->request($req);
 		
 		return;
+	} elsif ($method eq 'IMAGE') {
+		
+		print "($address, $method, $label)\n";
+		# a hack to grab attachment images
+		
+		my $image_name = $label;
+		
+		my $req = HTTP::Request->new(GET => "$address");
+		my $response = $ua->request($req);
+		if ($response->is_error) {
+			print "error retrieving!\n";
+			return 0;
+		}
+		
+		my $http = $response->content;
+		
+		open (DATA, ">$icons_dir$image_name") || print "Error: Could not open file for writing: $!\n";
+		print DATA $http;
+		close DATA;
+
+		$error_block->up;
+		
+		return 0;
 	}
+
 	
 	$http_status->enqueue($trans{notify_check});
 		
@@ -848,17 +878,26 @@ sub check {
 		# print "atom:\n$atom\n\n";
 		
 		# mb is the message body ... and there's often more than one block!
-		my $mb; 
+		my ($mb, $ma); 
 		while ($atom =~ m/\["mb","(.*?)",\d\]/g) {
 			$mb .= "$1";
+		}
+		
+		# ma is the attachment, if any
+		while ($atom =~ m/\["ma",\[(.*?)\]/g) {
+			my $att = $1;
+			if ($att =~ m/src\\u003d\\\"(.*?)\\\"/g) {
+				$ma = $1;
+			}
 		}
 		
 		# cs is the message id
 		my ($cs) = ($atom =~ m/\["cs","(.*?)"/);
 		
 		$mb = clean_text_body($mb);
-		$messages_ext{$cs}->{text} = "$mb";
+		$messages_ext{$cs}->{text} = $mb;
 		$messages_ext{$cs}->{shown} = 1;
+		$messages_ext{$cs}->{attachment} = $ma;
 		
 		notify();
 		return 1;
@@ -1323,7 +1362,7 @@ sub notify {
 	my $count;
 	foreach (@messages) {
 		$count++;
-		my ($href, $id, $title, $author, $body, $label) = ($_->{href}, $_->{id}, $_->{title}, $_->{author}, $_->{body}, $_->{label});
+		my ($href, $id, $title, $author, $body, $label, $att) = ($_->{href}, $_->{id}, $_->{title}, $_->{author}, $_->{body}, $_->{label}, $_->{attachment});
 		my $mb;
 		if ($messages_ext{$id}) {
 			$mb = $messages_ext{$id}->{text};
@@ -1361,6 +1400,23 @@ sub notify {
 		
 		$title_l_ebox->add($title_l);		
 		$hbox_t->pack_start($title_l_ebox,0,0,0);
+		
+		if ($messages_ext{$id}->{attachment}) {
+			$att = $messages_ext{$id}->{attachment};
+			my ($image_name) = ($att =~ m/.*\/(.*)$/);		
+			
+			check_icon($att);
+			
+			my $att_image = Gtk2::Image->new_from_pixbuf(set_icon("$icons_dir/$image_name", 16));
+			$hbox_t->pack_end($att_image,0,0,0);
+			
+			# my $title_att = Gtk2::Label->new;
+			# $title_att->set_markup("<span foreground=\"#000000\"><small>[$att]</small></span>");
+			# $title_att->set_line_wrap(1);
+			# $hbox_t->pack_end($title_att,0,0,0);
+			
+		}
+			
 
 		
 		# --- options ---
@@ -1514,6 +1570,41 @@ sub notify {
 	}
 }
 
+
+sub check_icon {
+	# download the icon if it doesn't exist ...
+	my ($image) = @_;
+	my ($image_name) = ($image =~ m/.*\/(.*)$/);
+	unless (-e "$icons_dir/$image_name") {
+		print "Retrieving $image from mail.google.com ...\n" unless $silent;
+		$request->enqueue("IMAGE:mail.google.com$image $image_name");
+		# return unless $data;
+		# print "data is $data\ngoing to >$icons_dir/$image_name";
+		# open (DATA, ">$icons_dir/$image_name") || die "Could not open file for writing: $!\n";
+		# print DATA $data;
+		# close DATA;
+		$error_block->down;
+	}
+}
+
+sub http_get_main {
+	my ($address) = @_;
+	
+	my $ua = LWP::UserAgent->new();		
+	my $req = HTTP::Request->new(GET => "$address");
+
+	my $response = $ua->request($req);
+	if ($response->is_error) {
+		print "error!\n";
+		return 0;
+	}
+	
+	my $http = $response->content;
+	
+	return $http;
+	
+	
+}
 
 sub text_norm {
 	my ($body, $pre, $post) = @_;
@@ -2629,6 +2720,14 @@ sub set_icons {
 	$error_pixbuf = $custom_error_pixbuf if $custom_error_icon;
 		
 }
+
+sub set_icon {
+	my ($file, $size) = @_;
+	my $pixbuf = Gtk2::Gdk::Pixbuf->new_from_file($file);
+	my $scaled = $pixbuf->scale_simple($size, $size, "hyper");
+	return $scaled;
+}
+
 
 
 #######################
