@@ -5,7 +5,7 @@
 # system tray; optionally saves password in encrypted form using
 # machine-unique passphrase
 
-# version 1.11.1pre3 (7/5/2007)
+# version 1.11.1svn (7/5/2007)
 # Copyright © 2005-7 Owen Marshall
 
 # This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ use strict;
 
 my ($version, $silent, $nocrypt, $profile, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet);
 BEGIN {
-	$version = "1.11.1pre3";
+	$version = "1.11.1svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
@@ -1601,6 +1601,8 @@ sub undo_last {
 }
 
 sub get_screen {
+	my ($boxx, $boxy)=@_;
+	
 	# get screen resolution
 	my $monitor = $eventbox->get_screen->get_monitor_at_point($boxx,$boxy);
     	my $rect = $eventbox->get_screen->get_monitor_geometry($monitor);
@@ -1626,7 +1628,7 @@ sub show_notify {
 	my $icon_height = $eventbox->allocation->height;
 	
 	# get screen resolution
-	my ($monitor,$rect,$width,$height)=get_screen();
+	my ($monitor,$rect,$width,$height)=get_screen($boxx, $boxy);
 	
 	# if the tray icon is at the top of the screen, it's safe to move the window
 	# to the previous window's position - this makes things look a lot smoother
@@ -1757,7 +1759,7 @@ sub popup {
 	my $icon_height = $eventbox->allocation->height;
 	
 	# get screen resolution
-	my ($monitor,$rect,$width,$height)=get_screen();
+	my ($monitor,$rect,$width,$height)=get_screen($boxx, $boxy);
 		
 	# show the window to get width and height
 	$popup_win->show_all;
