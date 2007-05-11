@@ -782,10 +782,7 @@ sub http_get {
 		
 		return;
 	} elsif ($method eq 'IMAGE') {
-		
-		print "($address, $method, $label)\n";
 		# a hack to grab attachment images
-		
 		my $image_name = $label;
 		
 		my $req = HTTP::Request->new(GET => "$address");
@@ -800,7 +797,8 @@ sub http_get {
 		open (DATA, ">$icons_dir$image_name") || print "Error: Could not open file for writing: $!\n";
 		print DATA $http;
 		close DATA;
-
+		
+		# we need a semaphore here so the GUI doesn't redraw until the image is obtained
 		$error_block->up;
 		
 		return 0;
