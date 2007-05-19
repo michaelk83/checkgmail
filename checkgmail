@@ -337,7 +337,8 @@ my $prefs_dir = "$HOME/.checkgmail";
 $icons_dir = "$prefs_dir/attachment_icons";
 my $prefs_file_nonxml = "$prefs_dir/prefs$profile";
 my $prefs_file = "$prefs_file_nonxml.xml";
-$gmail_address = $hosted ? "mail.google.com/hosted/$hosted/feed/atom" : "mail.google.com/mail/feed/atom";
+$gmail_address = gen_prefix_url()."/feed/atom";
+# $gmail_address = $hosted ? "mail.google.com/a/$hosted/feed/atom" : "mail.google.com/mail/feed/atom";
 
 my %gmail_act = (
 	archive => 'rc_%5Ei',
@@ -649,14 +650,14 @@ sub http_check {
 			} else {
 				# hosted domains work differently ...
 				# First we POST a login
-				$error = http_get("https://www.google.com/a/$hosted/LoginAction|at=null&continue=http%3A%2F%2Fmail.google.com%2Fhosted%2F$hosted&service=mail&userName=$URI_user&password=$URI_passwd", "POST");
+				$error = http_get("https://www.google.com/a/$hosted/LoginAction|at=null&continue=http%3A%2F%2Fmail.google.com%2Fa%2F$hosted&service=mail&userName=$URI_user&password=$URI_passwd", "POST");
 				
 				# Then we grab the HID ("Hosted ID"?) cookie
 				$cookie_jar->scan(\&scan_at);
 				
 				# And now we login with that cookie, which will give us the GMAIL_AT cookie!
 				unless ($error || !$gmail_hid) {					
-					$error = http_get("https://mail.google.com/hosted/$hosted?AuthEventSource=Internal&auth=$gmail_hid", 'GET');	
+					$error = http_get("https://mail.google.com/a/$hosted?AuthEventSource=Internal&auth=$gmail_hid", 'GET');	
 				}
 			}
 
@@ -1341,7 +1342,7 @@ sub notify {
 					$ma1 = $ma2 = undef;
 				}
 				show_notify();
-				push @undo_buffer, [$id, 'read'];
+				push @undo_buffer, [$id, $_->{label}, 'read'];
 			}
 			queue_check($_) foreach @labels_to_check;
 		});
@@ -1389,7 +1390,7 @@ sub notify {
 			$title_l_ebox->signal_handler_disconnect($s2);
 			unless ($mb) {
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
-				$request->enqueue("GET:mail.google.com/mail/?view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				$request->enqueue("GET:".gen_prefix_url()."/?view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
@@ -1435,7 +1436,7 @@ sub notify {
 				# mark as read if we can - otherwise opened messages hang around ...
 				### probably need an option for this!
 				$request->enqueue(gen_action_url($gmail_act{read},$id));
-				@undo_buffer=([$id, 'read']);
+				@undo_buffer=([$id, $label, 'read']);
 				queue_check($label);
 			}
 		});
@@ -1465,7 +1466,7 @@ sub notify {
 				$mark_ebox->signal_handler_disconnect($s1);
 				$mark_ebox->signal_handler_disconnect($s2);
 				show_notify();
-				@undo_buffer=([$id, 'read']);
+				@undo_buffer=([$id, $label, 'read']);
 				queue_check($label);
 			});
 			$mark_ebox->add($mark_label);
@@ -1487,7 +1488,7 @@ sub notify {
 				$archive_ebox->signal_handler_disconnect($s1a);
 				$archive_ebox->signal_handler_disconnect($s2a);
 				show_notify();
-				@undo_buffer=([$id, 'archive']);
+				@undo_buffer=([$id, $label, 'archive']);
 				push(@{$undo_buffer[0]}, 'read') if $archive_as_read;
 				queue_check($label);
 			});
@@ -1510,7 +1511,7 @@ sub notify {
 				$spam_ebox->signal_handler_disconnect($s1s);
 				$spam_ebox->signal_handler_disconnect($s2s);
 				show_notify();
-				@undo_buffer=([$id, 'spam', 'read']);
+				@undo_buffer=([$id, $label, 'spam', 'read']);
 				queue_check($label);
 			});
 			$spam_ebox->add($spam_label);
@@ -1531,7 +1532,7 @@ sub notify {
 				$delete_ebox->signal_handler_disconnect($s1d);
 				$delete_ebox->signal_handler_disconnect($s2d);
 				show_notify();
-				@undo_buffer=([$id, 'delete']);
+				@undo_buffer=([$id, $label, 'delete']);
 				queue_check($label);
 			});
 			$delete_ebox->add($delete_label);
@@ -1638,7 +1639,7 @@ sub get_login_href {
 	
 	my $target_uri;
 	if ($hosted) {
-		$target_uri = "http://mail.google.com/hosted/$hosted/$options_uri";
+		$target_uri = "http://mail.google.com/a/$hosted/$options_uri";
 	} else {
 		$target_uri = "https://www.google.com/accounts/ServiceLoginAuth?ltmpl=yj_wsad&ltmplcache=2&continue=$escaped_uri&service=mail&rm=false&ltmpl=yj_wsad&Email=$URI_user&Passwd=$URI_passwd&rmShown=1&null=Sign+in";
 	}
@@ -1664,12 +1665,21 @@ sub gen_action_url {
 	($act, $search) = split(":",$act);
 	$search ||= 'all';
 	
+	my $prefix = gen_prefix_url();
+	return ("POST:$prefix/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+	
+	# if ($hosted) {
+		# return ("POST:mail.google.com/a/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+	# } else {
+		# return ("POST:mail.google.com/mail/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+	# }
+}
+
+sub gen_prefix_url {
 	if ($hosted) {
-		print "gen action url: mail.google.com/hosted/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1\n" unless $silent;
-		return ("POST:mail.google.com/hosted/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+		return ("mail.google.com/a/$hosted");
 	} else {
-		print "gen action url: mail.google.com/mail/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1\n" unless $silent;
-		return ("POST:mail.google.com/mail/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+		return ("mail.google.com/mail");
 	}
 }
 
@@ -1681,14 +1691,16 @@ sub undo_last {
 	
 	notify($trans{notify_undoing});
 	
+	my $label;
 	foreach my $i (@undo_buffer) {
 		my $id = shift(@$i);
+		$label = shift(@$i);
 		print "undoing $id, @$i\n" unless $silent;
 		foreach (@$i) {
 			$request->enqueue(gen_action_url($gmail_undo{$_},$id));
 		}
 	}
-	queue_check();
+	queue_check($label);
 }
 
 sub get_screen {

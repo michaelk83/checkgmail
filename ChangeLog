@@ -1,5 +1,8 @@
 - New Feature: Checkgmail now displays some information about attachments when the full text of the message is requested (limited to the first attachment in a message at present)
-- BUGFIX: support multiple monitors (thanks for Philip Jagielski for this fix)
+- BUGFIX: support multiple monitors (thanks to Philip Jagielski for this fix)
+- BUGFIX: Fixed hosted domain actions (the gmail addresses had completely changed to /a/hosted, so actions were no longer working)  Thanks to Michael Irwin for this fix
+- BUGFIX: Undo last action now correctly checks the label that a message came from after undoing the action
+- Minor code tidying and other fixes
 
 (Version 1.11.1pre3 - 7/5/07)
 - The width of the popup window can be set using the commandline -popup_size=[width-in-pixels] option.  490 works for me.  This is provided to fix a gtk bug that prevents you from setting the width of a wrapped text box in characters.
