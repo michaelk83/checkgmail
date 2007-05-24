@@ -1311,7 +1311,7 @@ sub notify {
 	$notify_vbox->pack_start($status_hbox,0,0,0);
 	
 	$status_label = Gtk2::Label->new;
-	$status_label->set_markup($status);
+	$status_label->set_markup("<span foreground=\"#000000\">$status</span>");
 	$status_hbox->pack_start($status_label,0,0,0);
 	
 	# $message_flag = @text ? 1 : 0;
