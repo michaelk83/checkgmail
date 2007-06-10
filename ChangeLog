@@ -1,7 +1,10 @@
+- New Feature: URIs are clickable (if libsexy and Gtk2-Sexy (Perl bindings to libsexy) are installed).  Sorry, these will probably require downloading the source and building by hand, so at the moment it's not for the feint-hearted.  But it's well worth it, I reckon :)
 - New Feature: Checkgmail now displays some information about attachments when the full text of the message is requested (limited to the first attachment in a message at present)
+- BUGFIX: A work-around for the incorrect display of accents in message full text - thanks to Ignacio García for this fix
 - BUGFIX: support multiple monitors (thanks to Philip Jagielski for this fix)
 - BUGFIX: Fixed hosted domain actions (the gmail addresses had completely changed to /a/hosted, so actions were no longer working)  Thanks to Michael Irwin for this fix
 - BUGFIX: Undo last action now correctly checks the label that a message came from after undoing the action
+- BUGFIX: Font colour fix
 - Minor code tidying and other fixes
 
 (Version 1.11.1pre3 - 7/5/07)

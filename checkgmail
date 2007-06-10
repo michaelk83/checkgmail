@@ -24,13 +24,14 @@
 # USA
 
 use strict;
+# use utf8;
 
 
 ###########################
 # Command-line processing
 #
 
-my ($version, $silent, $nocrypt, $profile, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet);
+my ($version, $silent, $nocrypt, $profile, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
 BEGIN {
 	$version = "1.11.1svn";
 	$silent = 1;
@@ -228,7 +229,16 @@ EOF
 			print "\nCheckGmail requires the above packages for password encryption\nPlease download and install from CPAN (http://search.cpan.org) if you want to use this feature ...\n\n";
 			$nocrypt = 1;
 		}
-	}		
+	}
+	
+	# optional packages for urls in labels
+	foreach (split("\n","
+	use Gtk2::Sexy;
+	")) {&$eval_sub($_)};
+	if (($failed_packages) && ($failed_packages =~ m/Sexy/i)) {
+		print "\nCheckGmail uses Gtk2::Sexy for clickable URLs in mail messages\nPlease download and install from CPAN (http://search.cpan.org) if you want to use this feature ...\n\n";
+		$libsexy = 0;
+	} else { $libsexy = 1; }
 }
 
 # There's something wrong with Debian's Crypt::Simple, and it's causing problems ...
@@ -892,13 +902,21 @@ sub check {
 			}
 		}
 		
+		$mb = clean_text_body($mb);
+		
+		print "clean text:\n$mb\n";
+		
+		# if we're using libsexy, mark the hrefs
+		# if ($libsexy) {
+			# $mb =~ s/(http:\/\/[^\s]*)/\<a href="$1"\>$1\<\/a>/g;
+		# }
+		
 		# cs is the message id
 		my ($cs) = ($atom =~ m/\["cs","(.*?)"/);
-		
-		$mb = clean_text_body($mb);
 		$messages_ext{$cs}->{text} = $mb;
 		$messages_ext{$cs}->{shown} = 1;
 		$messages_ext{$cs}->{attachment} = $ma;
+		
 		
 		notify();
 		return 1;
@@ -1047,18 +1065,27 @@ sub clean_text_body {
 	s/&hellip;/\.\.\./g;
 	# s/&\s/\&amp; /g;
 	s/\\u003c/</g;
+	s/\>/>/g;
 	s/\\u([\d\w]{4})/"&#".hex($1).";";/gex;
+	s/&#61;/=/g;
 	s/\\t/\t/g;
 	# s/\s\\n//g;
 	# s/\\n\s//g;
 	# s/\\n/ /g;
 	s/(\\n)+/\n/g;
+	s/\\(.)/$1/g;
 	s/<br\s*\/*\\*>/\n/g;
 	s/<p\s*\/*\\*>/\n\n/g;
 	s/<\/div\\*>/\n/g; # MS now uses div blocks for paragraphs!  Who'd have thought they could be so abhorrent?
-	s/Â//g;
-	s/<.*?>//g;
-	s/ï¿½/"/g;
+	# s/(?:\n\s*){3,}/\n\n/sg;
+	# s/Â//g;
+	s/<.*?>//g unless $libsexy;
+	s/<a.*?(href=".*?").*?>(.*?)<\/a>/<-a $1>$2<-\/a>/ig;
+	s/<[^-].*?>//g;
+	# s/<([\/]|[^a])[^a].*?>//g;
+	# s/<a\s+>(.*?)<\/a>/$1/g;
+	s/<-/</g;
+	# s/ï¿½/"/g;
 	s/\\'/'/g;
 	# s/</\&lt;/g;
 	# s/>/\&gt;/g;
@@ -1545,7 +1572,16 @@ sub notify {
 		my $hbox_b = Gtk2::HBox->new(0,0);
 		$notify_vbox->pack_start($hbox_b,0,0,0);
 		
-		my $body_l = Gtk2::Label->new;
+		my $body_l;
+		if ($libsexy) {
+			$body_l = Gtk2::Sexy::UrlLabel->new;
+			$body_l->signal_connect(url_activated => sub{
+				my ($url_label, $url) = @_;
+				run_command($gmail_command, $url);
+			});
+		} else {
+			$body_l = Gtk2::Label->new;
+		}
 		$body_l->set_line_wrap(1);
 		# my ($w, $h) = $body_l->get_size_request;
 		# print "($w, $h)\n";
@@ -1556,6 +1592,8 @@ sub notify {
 
 		
 		my $term = ($count == $number) ? "" : "\n";
+		use Encode;
+		Encode::from_to($body, 'utf-8', 'iso-8859-15');
 		$body_l->set_markup("<span foreground=\"grey25\">$body</span>$term");
 		$hbox_b->pack_start($body_l,0,0,0);
 	}
