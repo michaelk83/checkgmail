@@ -5,7 +5,7 @@
 # system tray; optionally saves password in encrypted form using
 # machine-unique passphrase
 
-# version 1.11.1svn (7/5/2007)
+# version 1.12.1svn (25/6/2007)
 # Copyright © 2005-7 Owen Marshall
 
 # This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ use strict;
 
 my ($version, $silent, $nocrypt, $profile, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
 BEGIN {
-	$version = "1.11.1svn";
+	$version = "1.12.1svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
@@ -588,7 +588,7 @@ sub exit_prog {
 	}
 	
 	$child_exit = 1;
-	queue_check();
+	# queue_check();
 	
 	$http_check->join();
 	
@@ -884,7 +884,7 @@ sub check {
 		# we use this to grab the full text of messages ...
 		
 		# uncomment below to see the datapack structure
-		# print "atom:\n$atom\n\n";
+		print "atom:\n$atom\n\n";
 		
 		# mb is the message body ... and there's often more than one block!
 		my ($mb, $ma); 
@@ -2040,6 +2040,12 @@ sub pack_menu {
 		about();
 	});
 	
+	my $menu_restart = Gtk2::ImageMenuItem->new($trans{menu_restart});
+	#$menu_about->set_image(Gtk2::Image->new_from_stock('gtk-about','menu'));
+	$menu_restart->signal_connect('activate',sub {
+		exec "$0";
+	});
+	
 	my $menu_quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
 	$menu_quit->signal_connect('activate',sub {
 			Gtk2->main_quit;
@@ -2053,6 +2059,7 @@ sub pack_menu {
 	$menu->append($menu_prefs);
 	$menu->append($menu_about);
 	$menu->append(Gtk2::SeparatorMenuItem->new);
+	$menu->append($menu_restart);
 	$menu->append($menu_quit);
 	
 	$menu->show_all;
@@ -2667,7 +2674,7 @@ Copyright &#169; 2005-7, Owen Marshall
 			
 <small>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</small>
 
-<small>Special thanks to Sandro Tosi, Rune Maagensen, Jean-Baptiste Denis, Jochen Hoenicke, Melita Ivkovic, Poika Pilvimaa, Alvaro Arenas, Marek Drwota, Dennis van der Staal, Jordi Sanfeliu, Fernando Pereira, Matic Ahacic, Johan Gustafsson, Satoshi Tanabe, Marius Mihai, Marek Malysz, Ruszkai &#193;kos, Nageswaran Rajendran, &#23385;&#32487;&#19996;, Martin Kody&#353;, Rune Gangst&#248;, Christian M&#252;ller and Luciano Ziegler for translations ...</small>
+<small>Special thanks to Sandro Tosi, Rune Maagensen, Jean-Baptiste Denis, Jochen Hoenicke, Melita Ivkovic, Poika Pilvimaa, Alvaro Arenas, Marek Drwota, Dennis van der Staal, Jordi Sanfeliu, Fernando Pereira, Matic Ahacic, Johan Gustafsson, Satoshi Tanabe, Marius Mihai, Marek Malysz, Ruszkai &#193;kos, Nageswaran Rajendran, &#23385;&#32487;&#19996;, Martin Kody&#353;, Rune Gangst&#248;, Christian M&#252;ller, Luciano Ziegler, Igor Donev and anonymous contributors for translations ...</small>
 		
 http://checkgmail.sf.net		
 EOF
@@ -2891,7 +2898,7 @@ sub URI_escape {
 
 sub read_translations {
 	my $default_translations = <<EOF;
-<opt Version="1.11svn">
+<opt Version="1.12">
   <Language name="Català"
             login_err="Error: Nom d'usuari o contrassenya incorrecte"
             login_title="Entrant a Gmail ..."
@@ -3103,6 +3110,7 @@ sub read_translations {
             menu_compose="Compose mail"
             menu_prefs="_Preferences"
             menu_undo="_Undo last action"
+			menu_restart="Restart ..."
             notify_and="and"
             notify_check="Checking Gmail ..."
             notify_from="From:"
@@ -4364,6 +4372,134 @@ sub read_translations {
             prefs_tray_no_mail_icon="வழக்கமான மடல்-இல்லை குறிப்படத்தைப் பயன்படுத்த"
             prefs_tray_pdelay="புதிய மடலின் வருகை  அறிவிப்பை"
             prefs_tray_pdelay2="நொடிகளுக்குக் காட்டுக" />
+  <Language name="Македонски"
+            login_err="Грешка: Погрешно корисничко име или лозинка"
+            login_title="Се логирам на Gmail ..."
+            mail_archive="Архива"
+            mail_archiving="Архивирам ..."
+            mail_delete="Бриши"
+            mail_deleting="Бришам ..."
+            mail_mark="Обележи како прочитано"
+            mail_mark_all="Обележи сѐ како прочитано"
+            mail_marking="Обележувам како прочитано ..."
+            mail_marking_all="Обележувам сѐ како прочитано ..."
+            mail_open="Отвори"
+            mail_report_spam="Пријави спам"
+            mail_reporting_spam="Пријавувам спам ..."
+            menu_about="_За"
+            menu_check="_Провери пошта"
+            menu_compose="Пиши пошта"
+            menu_prefs="_Поставување"
+            menu_undo="_Врати ја претходната акција"
+            notify_and="и"
+            notify_check="Проверувам на Gmail ..."
+            notify_from="Од:"
+            notify_login="Се логирам на Gmail ..."
+            notify_multiple1="Има "
+            notify_multiple2=" нови пораки ..."
+            notify_new_mail="Нова пошта од "
+            notify_no_mail="Нема нови пораки"
+            notify_no_subject="(без наслов)"
+            notify_no_text="(без текст)"
+            notify_single1="Има "
+            notify_single2=" нова порака ..."
+            notify_undoing="Ја враќам претходната акција ..."
+            prefs="CheckGmail поставувања"
+            prefs_check="Проверување пошта"
+            prefs_check_24_hour="24 часа"
+            prefs_check_archive="Архивирај, исто така обележи како прочитано"
+            prefs_check_atom="Адреса на каналот"
+            prefs_check_delay="Провери го сандачето за пошта секои "
+            prefs_check_delay2=" секунди"
+            prefs_check_labels="Исто така провери ги следниве ознаки:"
+            prefs_check_labels_add="Додај ознака"
+            prefs_check_labels_delay="Провери секои (секунди)"
+            prefs_check_labels_label="Ознака"
+            prefs_check_labels_new="[нова ознака]"
+            prefs_check_labels_remove="Тргни ознака"
+            prefs_external="Надворешни команди"
+            prefs_external_browser="Команда која ќе се изврши на кликање на иконата "
+            prefs_external_browser2="(користи %u да ја преставиш Gmail веб адресата)"
+            prefs_external_mail_command="Команда која ќе се изврши кога има нова пошта:"
+            prefs_external_nomail_command="Команда која ќе се изврши кога нема нова пошта:"
+            prefs_lang="Јазик"
+            prefs_login="Детали за логирањето"
+            prefs_login_pass="_Лозинка"
+            prefs_login_save="Сними лозинка"
+            prefs_login_save_kwallet="во KDE паричникот"
+            prefs_login_save_plain="како обичен текст"
+            prefs_login_user="_Корисничко име"
+            prefs_tray="Системско ќоше"
+            prefs_tray_bg="Подеси боја на ќошето"
+            prefs_tray_error_icon="Користи посебна икона за грешка"
+            prefs_tray_mail_icon="Користи посебна икона за нова пошта"
+            prefs_tray_no_mail_icon="Користи посебна икона за немање нова пошта"
+            prefs_tray_pdelay="Покажи го скокачкото прозорче за нова пошта "
+            prefs_tray_pdelay2=" секунди" />
+  <Language name="Biełaruskaja łacinka"
+            login_err="Pamyłka: Drenny login albo parol"
+            login_title="Aŭtaryzacyja ŭ Gmail ..."
+            mail_archive="Archivizuj"
+            mail_archiving="Archivizuje ..."
+            mail_delete="Vydal"
+            mail_deleting="Vydalaje ..."
+            mail_mark="Paznač jak pračytanaje"
+            mail_mark_all="Paznač usio jak pračytanaje"
+            mail_marking="Zaznačaje jak pračytanaje ..."
+            mail_marking_all="Zaznačaje usio jak pračytanaje ..."
+            mail_open="Adčyni"
+            mail_report_spam="Rapartuj spam"
+            mail_reporting_spam="Rapartuje spam ..."
+            menu_about="_Pra prahramu"
+            menu_check="_Pravier poštu"
+            menu_compose="Napišy list"
+            menu_prefs="_Nałady"
+            menu_undo="_Anuluj apošniuju aperacyju"
+            notify_and="i"
+            notify_check="Spraŭdžvaju Gmail ..."
+            notify_from="Ad:"
+            notify_login="Aŭtaryzacyja ŭ Gmail ..."
+            notify_multiple1="Jość "
+            notify_multiple2=" novyja listy ..."
+            notify_new_mail="Novaja pošta ad "
+            notify_no_mail="Niama novych listoŭ"
+            notify_no_subject="(biaz temy)"
+            notify_no_text="(biaz źmiestu)"
+            notify_single1="Jość "
+            notify_single2=" novy list ..."
+            notify_undoing="Anuloŭvajecca apošniaja aperacyja ..."
+            prefs="CheckGmail - nałady"
+            prefs_check="Pravierka pošty"
+            prefs_check_24_hour="24-hadzinny hadzińnik"
+            prefs_check_archive="Aarchivizujučy paznač taksama jak pračytanaje"
+            prefs_check_atom="Adras "
+            prefs_check_delay="Praviaraj poštu kožnyja "
+            prefs_check_delay2=" sekund"
+            prefs_check_labels="Pravier taksama etykety:"
+            prefs_check_labels_add="Dadaj etykietu"
+            prefs_check_labels_delay="Pravier kožnyja: (sekund)"
+            prefs_check_labels_label="Etykieta"
+            prefs_check_labels_new="[novaja etykieta]"
+            prefs_check_labels_remove="Vydal etykietu"
+            prefs_external="Unutranyja zahady"
+            prefs_external_browser="Zahad kab vykanać paśla kliku ŭ ikonu"
+            prefs_external_browser2="(u miescy %u budzie ŭstaŭleny adras Gmail)"
+            prefs_external_mail_command="Zahad kab vykanać kali pryjdzie novy list:"
+            prefs_external_nomail_command="Zahad kab vykanać kali niama novych listoŭ:"
+            prefs_lang="Mova"
+            prefs_login="Infarmacyja pra kont"
+            prefs_login_pass="_Parol"
+            prefs_login_save="Zapišy parol"
+            prefs_login_save_kwallet="u hametcy KDE"
+            prefs_login_save_plain="jak zvyčajny tekst"
+            prefs_login_user="_Karystalnik"
+            prefs_tray="Ikona"
+            prefs_tray_bg="Fon pad ikonaj ..."
+            prefs_tray_error_icon="Ułasnaja ikona pamyłki"
+            prefs_tray_mail_icon="Ułasnaja ikona novaj pošty"
+            prefs_tray_no_mail_icon="Ułasnaja ikona adsutnaści pošty"
+            prefs_tray_pdelay="Pakazvaj vypłyŭnoje vakno ciaham "
+            prefs_tray_pdelay2=" sekund" />
   <Language name="日本語"
             login_err="エラー: ユーザーネームまたはパスワードが違います"
             login_title="Gmail にログインしています ..."
