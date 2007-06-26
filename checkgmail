@@ -903,6 +903,7 @@ sub check {
 		}
 		
 		$mb = clean_text_body($mb);
+		print "cleaned text is\n$mb\n\n";
 						
 		# cs is the message id
 		my ($cs) = ($atom =~ m/\["cs","(.*?)"/);
@@ -1744,7 +1745,7 @@ sub get_screen {
 	
 	# support multiple monitors (thanks to Philip Jagielski for this simple solution!)
 	my $width;
-	for my $i (0 .. ($eventbox->get_screen->get_n_monitors-1)) {
+	for my $i (0 .. $monitor) {
 		$width += $eventbox->get_screen->get_monitor_geometry($i)->width;
 	}
 	
