@@ -31,7 +31,7 @@ use strict;
 # Command-line processing
 #
 
-my ($version, $silent, $nocrypt, $profile, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
+my ($version, $silent, $nocrypt, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
 BEGIN {
 	$version = "1.12.1svn";
 	$silent = 1;
@@ -54,6 +54,10 @@ BEGIN {
 			
 			/silent/ && do {
 				$silent = 1;
+				last };
+				
+			/disable-monitors-check/ && do {
+				$disable_monitors_check = 1;
 				last };
 				
 			/cookie_login/ && do {
@@ -1745,8 +1749,12 @@ sub get_screen {
 	
 	# support multiple monitors (thanks to Philip Jagielski for this simple solution!)
 	my $width;
-	for my $i (0 .. $monitor) {
-		$width += $eventbox->get_screen->get_monitor_geometry($i)->width;
+	unless ($disable_monitors_check) {
+		for my $i (0 .. $monitor) {
+			$width += $eventbox->get_screen->get_monitor_geometry($i)->width;
+		}
+	} else {
+		$width = $eventbox->get_screen->get_monitor_geometry($monitor)->width;
 	}
 	
 	return ($monitor,$rect,$width,$height);
