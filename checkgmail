@@ -31,7 +31,7 @@ use strict;
 # Command-line processing
 #
 
-my ($version, $silent, $nocrypt, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
+my ($version, $silent, $nocrypt, $notsexy, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
 BEGIN {
 	$version = "1.12.1svn";
 	$silent = 1;
@@ -58,6 +58,10 @@ BEGIN {
 				
 			/disable-monitors-check/ && do {
 				$disable_monitors_check = 1;
+				last };
+				
+			/no-libsexy/ && do {
+				$notsexy = 1;
 				last };
 				
 			/cookie_login/ && do {
@@ -98,7 +102,7 @@ BEGIN {
 				last };
 				
 			print "CheckGmail v$version\nCopyright © 2005-7 Owen Marshall\n\n";
-			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-h]\n\n";
+			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-h]\n\n";
 			exit 1;
 			
 		}	
@@ -242,7 +246,7 @@ EOF
 	if (($failed_packages) && ($failed_packages =~ m/Sexy/i)) {
 		print "\nCheckGmail uses Gtk2::Sexy for clickable URLs in mail messages\nPlease download and install from CPAN (http://search.cpan.org) if you want to use this feature ...\n\n";
 		$libsexy = 0;
-	} else { $libsexy = 1; }
+	} else { $libsexy = 1 unless $notsexy; }
 }
 
 # There's something wrong with Debian's Crypt::Simple, and it's causing problems ...
@@ -888,7 +892,7 @@ sub check {
 		# we use this to grab the full text of messages ...
 		
 		# uncomment below to see the datapack structure
-		print "atom:\n$atom\n\n";
+		print "atom:\n$atom\n\n" unless $silent;
 		
 		# mb is the message body ... and there's often more than one block!
 		my ($mb, $ma); 
@@ -907,7 +911,7 @@ sub check {
 		}
 		
 		$mb = clean_text_body($mb);
-		print "cleaned text is\n$mb\n\n";
+		print "cleaned text is\n$mb\n\n" unless $silent;
 						
 		# cs is the message id
 		my ($cs) = ($atom =~ m/\["cs","(.*?)"/);
