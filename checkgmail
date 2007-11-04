@@ -1172,6 +1172,10 @@ sub read_prefs {
 		lock($gmail_address);
 				
 		my $prefs_xml = XMLin($prefs, ForceArray => 1);
+
+		## For debugging ...
+		# use Data::Dumper;
+		# print Dumper $prefs_xml;
 		
 		foreach my $i (keys %pref_variables) {
 			my $pointer = $pref_variables{$i};
@@ -1240,7 +1244,7 @@ sub write_prefs {
 # It's very cumbersome though - I'm not all that happy with this solution!!!
 sub convert_labels_from_hash {
 	@labels=();	
-	push @labels, {label => $_, delay => $label_delay{$_}} foreach sort(keys(%label_delay));
+	push @labels, {label => "$_", delay => $label_delay{$_}} foreach sort(keys(%label_delay));
 }
 
 sub convert_labels_from_array {
@@ -1706,7 +1710,7 @@ sub gen_action_url {
 	$search ||= 'all';
 	
 	my $prefix = gen_prefix_url();
-	return ("POST:$prefix/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
+	return ("POST:$prefix/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1&rt=j");
 	
 	# if ($hosted) {
 		# return ("POST:mail.google.com/a/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
