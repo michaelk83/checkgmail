@@ -770,6 +770,7 @@ sub http_get {
 			$http_status->enqueue($error);
 		}
 		my $http = $response->content;
+		print "\n--------\n$http\n";
 		
 		# New google accounts use a strange javascript/meta-refresh redirect ...
 		# ... but we catch them with this! :)
@@ -789,6 +790,9 @@ sub http_get {
 				$http_status->enqueue($error);
 			}
 			my $http = $response->content;
+			
+			my ($cont) = ($new_addr =~ /continue=(.*)/);
+			print "cont = $cont\n";
 		}
 		return $error;
 		
@@ -930,8 +934,8 @@ sub check {
 	my $gmail = XMLin($atom_txt, ForceArray => 1);
 	
 	# # Uncomment below to view xml->array structure
-	# use Data::Dumper;
-	# print Dumper($gmail);
+	use Data::Dumper;
+	print Dumper($gmail);
 	
 	# Count messages ...
 	$new{$label} = 0;
@@ -1425,7 +1429,8 @@ sub notify {
 			$title_l_ebox->signal_handler_disconnect($s2);
 			unless ($mb) {
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
-				$request->enqueue("GET:".gen_prefix_url()."/?view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				#"              https://mail.google.com/mail/?ui=2&ik=3012d48c93&view=cv&th=1161865bef12d1ed&prf=1&rt=j&search=inbox
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
