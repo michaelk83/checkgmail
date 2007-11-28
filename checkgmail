@@ -770,7 +770,7 @@ sub http_get {
 			$http_status->enqueue($error);
 		}
 		my $http = $response->content;
-		print "\n--------\n$http\n";
+		# print "\n--------\n$http\n";
 		
 		# New google accounts use a strange javascript/meta-refresh redirect ...
 		# ... but we catch them with this! :)
@@ -792,7 +792,7 @@ sub http_get {
 			my $http = $response->content;
 			
 			my ($cont) = ($new_addr =~ /continue=(.*)/);
-			print "cont = $cont\n";
+			# print "cont = $cont\n";
 		}
 		return $error;
 		
@@ -2067,7 +2067,7 @@ sub pack_menu {
 	my $menu_restart = Gtk2::ImageMenuItem->new($trans{menu_restart});
 	#$menu_about->set_image(Gtk2::Image->new_from_stock('gtk-about','menu'));
 	$menu_restart->signal_connect('activate',sub {
-		exec "$0";
+		exec "$0 @ARGV";
 	});
 	
 	my $menu_quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
