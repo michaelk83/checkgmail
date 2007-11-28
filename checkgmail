@@ -388,12 +388,12 @@ unless (-d $prefs_dir) {
 		rename("$HOME/.checkgmailbak", "$prefs_dir/prefs");
 	} else {
 		# User hasn't run an old version, just create the dir
-		mkdir($prefs_dir, 0777);
+		mkdir($prefs_dir, 0700);
 	}
 }
 
 unless (-d $icons_dir) {
-	mkdir($icons_dir, 0777);
+	mkdir($icons_dir, 0700);
 }
 
 
@@ -934,8 +934,8 @@ sub check {
 	my $gmail = XMLin($atom_txt, ForceArray => 1);
 	
 	# # Uncomment below to view xml->array structure
-	use Data::Dumper;
-	print Dumper($gmail);
+	# use Data::Dumper;
+	# print Dumper($gmail);
 	
 	# Count messages ...
 	$new{$label} = 0;
@@ -956,6 +956,8 @@ sub check {
 		} 
 	}
 	@messages = @new_messages;
+	
+	# print "\n--------\nmessages: @messages\n";
 	
 			
 	if ($new{$label}) {
