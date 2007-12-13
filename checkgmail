@@ -284,6 +284,8 @@ my $HOME : shared;
 my $icons_dir : shared;
 my $gmail_at : shared;
 my $gmail_hid : shared;
+my $gmail_sid : shared;
+my $gmail_gausr : shared;
 my $delay : shared;
 my %label_delay : shared;
 # my @labels : shared;
@@ -665,6 +667,9 @@ sub http_check {
 			unless ($hosted) {
 				# Normal Gmail login action ...
 				$error = http_get("https://www.google.com/accounts/ServiceLoginAuth?ltmpl=yj_wsad&ltmplcache=2&continue=https%3A%2F%2Fmail.google.com%2Fmail%3F&service=mail&rm=false&ltmpl=yj_wsad&Email=$URI_user&Passwd=$URI_passwd&rmShown=1&null=Sign+in", "LOGIN");
+				$cookie_jar->scan(\&scan_at);
+				$error = http_get("https://mail.google.com/mail?nsr=0&auth=$gmail_sid&gausr=$gmail_gausr", "LOGIN");
+	
 			} else {
 				# hosted domains work differently ...
 				# First we POST a login
@@ -680,6 +685,7 @@ sub http_check {
 			}
 
 			$cookie_jar->scan(\&scan_at);
+			
 			unless ($gmail_at) {
 				unless ($error) {
 					$http_status->enqueue("Error: 401 Unauthorised");
@@ -735,6 +741,14 @@ sub scan_at {
 	if ($cookie_ref->[1] =~ m/HID/) {
 		$gmail_hid = $cookie_ref->[2];
 	}
+	
+	if ($cookie_ref->[1] =~ m/GAUSR/) {
+		$gmail_gausr = $cookie_ref->[2];
+	}
+	
+	if ($cookie_ref->[1] =~ m/SID/) {
+		$gmail_sid = $cookie_ref->[2];
+	}
 }
 
 
@@ -789,10 +803,7 @@ sub http_get {
 				$error = "Error: $code $message";
 				$http_status->enqueue($error);
 			}
-			my $http = $response->content;
-			
-			my ($cont) = ($new_addr =~ /continue=(.*)/);
-			# print "cont = $cont\n";
+			# my $http = $response2->content;
 		}
 		return $error;
 		
