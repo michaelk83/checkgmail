@@ -2060,7 +2060,7 @@ sub pack_menu {
 	my $menu_compose = Gtk2::ImageMenuItem->new($trans{menu_compose});
 	$menu_compose->set_image(Gtk2::Image->new_from_pixbuf(load_pixbuf($compose_mail_data)));
 	$menu_compose->signal_connect('activate',sub {
-		run_command($gmail_command, get_login_href("https://mail.google.com/mail/?&ik=&view=cm&fs=1&tf=1&zx="));
+		run_command($gmail_command, get_login_href("https://mail.google.com/mail/??view=cm&tf=0#compose"));
 	});
 	
 	my $menu_prefs = Gtk2::ImageMenuItem->new($trans{menu_prefs});
