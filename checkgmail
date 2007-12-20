@@ -591,14 +591,14 @@ sub exit_prog {
 	# After quitting the GUI we need to logout (if using the cookie_login method) and then clean up the threads ...
 	print "Exiting program ...\n" unless $silent;
 	
-	if ($cookies) {
-		$http_status->enqueue("Logging out ...");
-		$request->enqueue("LOGOUT:mail.google.com/mail/?logout");
-		sleep 1;
-	}
+	# if ($cookies) {
+		# $http_status->enqueue("Logging out ...");
+		# $request->enqueue("LOGOUT:mail.google.com/mail/?logout");
+		# sleep 1;
+	# }
 	
 	$child_exit = 1;
-	# queue_check();
+	queue_check();
 	
 	$http_check->join();
 	
