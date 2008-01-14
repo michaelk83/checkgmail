@@ -1095,11 +1095,13 @@ sub clean_text_body {
 	# s/\s\\n//g;
 	# s/\\n\s//g;
 	# s/\\n/ /g;
+	s/(\w)\\n(\w)/$1 $2/g;
+	s/\\n//g;
 	s/(\\n)+/\n/g;
 	s/\\(.)/$1/g;
 	s/<br\s*\/*\\*>/\n/g;
 	s/<p\s*\/*\\*>/\n\n/g;
-	s/<\/div\\*>/\n/g; # MS now uses div blocks for paragraphs!  Who'd have thought they could be so abhorrent?
+	s/<\/div\\*>/\n/g; # GMail now uses div blocks for paragraphs!  Who'd have thought they could be so abhorrent?
 	# s/(?:\n\s*){3,}/\n\n/sg;
 	s/<.*?>//g unless $libsexy;
 	s/<a.*?(href=".*?").*?>(.*?)<\/a>/<-a $1>$2<-\/a>/ig;
