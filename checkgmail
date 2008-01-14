@@ -667,8 +667,8 @@ sub http_check {
 			unless ($hosted) {
 				# Normal Gmail login action ...
 				$error = http_get("https://www.google.com/accounts/ServiceLoginAuth?ltmpl=yj_wsad&ltmplcache=2&continue=https%3A%2F%2Fmail.google.com%2Fmail%3F&service=mail&rm=false&ltmpl=yj_wsad&Email=$URI_user&Passwd=$URI_passwd&rmShown=1&null=Sign+in", "LOGIN");
-				$cookie_jar->scan(\&scan_at);
-				$error = http_get("https://mail.google.com/mail?nsr=0&auth=$gmail_sid&gausr=$gmail_gausr", "LOGIN");
+				# $cookie_jar->scan(\&scan_at);
+				# $error = http_get("https://mail.google.com/mail?nsr=0&auth=$gmail_sid&gausr=$gmail_gausr", "LOGIN");
 	
 			} else {
 				# hosted domains work differently ...
@@ -791,6 +791,9 @@ sub http_get {
 		if ($http =~ m/location\.replace\("(.*)"\)/) {
 			my $new_addr = $1;
 			$new_addr =~ s/\\u003d/=/g;
+			$new_addr =~ s/\\075/=/g;
+			$new_addr =~ s/\\46/&/g;
+			$new_addr =~ s/\\75/=/g;
 			return unless $new_addr =~ m/^http/i;
 			
  			print "\nNew login method: manually following redirect address $new_addr ...\n\n" unless $silent;
@@ -1086,7 +1089,8 @@ sub clean_text_body {
 	s/\\u003c/</g;
 	s/\>/>/g;
 	s/\\u([\d\w]{4})/"&#".hex($1).";";/gex;
-	s/&#61;/=/g;
+	s/&\#(\d+)\;/chr($1)/gex;
+			
 	s/\\t/\t/g;
 	# s/\s\\n//g;
 	# s/\\n\s//g;
@@ -1443,7 +1447,7 @@ sub notify {
 			unless ($mb) {
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
 				$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
-				#"              https://mail.google.com/mail/?ui=2&ik=3012d48c93&view=cv&th=1161865bef12d1ed&prf=1&rt=j&search=inbox
+				# $request->enqueue("GET:".gen_prefix_url()."/?ui=2&ik=b8bb7ca6af&view=cv&search=all&th=$id&rt=j&prf=1");
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
