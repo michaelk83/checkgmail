@@ -31,7 +31,7 @@ use strict;
 # Command-line processing
 #
 
-my ($version, $silent, $nocrypt, $notsexy, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
+my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy);
 BEGIN {
 	$version = "1.12.1svn";
 	$silent = 1;
@@ -101,8 +101,12 @@ BEGIN {
 				$nocrypt = 1;
 				last };
 				
+			/update/ && do {
+				$update = 1;
+				last };
+				
 			print "CheckGmail v$version\nCopyright © 2005-7 Owen Marshall\n\n";
-			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-h]\n\n";
+			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-update] [-h]\n\n";
 			exit 1;
 			
 		}	
@@ -265,7 +269,52 @@ if ($nocrypt && !$silent && !$usekwallet) {
 EOF
 }
 
+##################
+# Update utility
+#
 
+# Pretty damn simple right now, but it works ...
+# ... idea taken from a script on the checkgmail forums (thanks, guys!)
+
+# no version checking right now -- but does show the user a diff of the changes ...
+
+if ($update) {
+	my $checkgmail_loc = $0;
+	my ($exec_dir) = $checkgmail_loc =~ m/(.*)checkgmail/;
+	chdir("/tmp");
+	print "Downloading latest version of checkgmail from SVN ...\n\n";
+	`wget http://checkgmail.svn.sourceforge.net/viewvc/*checkout*/checkgmail/checkgmail`;
+	print "\n\nDifferences between old and new versions:\n";
+	print "diff -urN checkgmail $checkgmail_loc\n";
+	my $diff_out = `diff -urN checkgmail $checkgmail_loc`;
+	print "$diff_out\n\n";
+	my $do_update = ask("\n\nOK to update to new version via 'sudo mv checkgmail $exec_dir'?(Y/n)");
+	if ($do_update eq "Y") {
+		print "chmod a+x checkgmail\n";
+		`chmod a+x checkgmail`;
+		print "sudo mv checkgmail $exec_dir\n";
+		`sudo mv checkgmail $exec_dir`;
+		print "\nRestarting checkgmail ...\n";
+		exec "$0";
+	} else {
+		print "Update NOT performed ...\n";
+		print "Deleting temp file ...\n";
+		unlink("checkgmail");
+		print "Continuing with application startup ...\n\n";
+	}
+}	
+
+
+sub ask {
+	my ($question,$prompt)=@_;
+	$prompt||="> ";
+	print "$question$prompt";
+	my $ans = <STDIN>;
+	chomp($ans);
+	return $ans;
+}
+			
+			
 ##########################################
 # Threads for non-blocking HTTP-requests
 #
@@ -2084,7 +2133,7 @@ sub pack_menu {
 	my $menu_restart = Gtk2::ImageMenuItem->new($trans{menu_restart});
 	#$menu_about->set_image(Gtk2::Image->new_from_stock('gtk-about','menu'));
 	$menu_restart->signal_connect('activate',sub {
-		exec "$0 @ARGV";
+		restart();
 	});
 	
 	my $menu_quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
@@ -2104,6 +2153,10 @@ sub pack_menu {
 	$menu->append($menu_quit);
 	
 	$menu->show_all;
+}
+
+sub restart {
+	exec "$0 @ARGV";
 }
 
 
