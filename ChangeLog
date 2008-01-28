@@ -1,5 +1,13 @@
+(Version 1.13 - 19/1/08)
+- New Feature: -update command-line switch will download the latest version of the program from SVN and show the user a diff between the two versions, before asking the user if they want to upgrade.  This feature will hopefully be improved in newer versions (at the moment there is no version tracking or checking routinely for updates).
 - New Feature: Restart command in right-click menu (makes it easy to restart the program if it hangs on "Checking Gmail ...")
-- Added switches: "-disable-monitors-check" to bypass xinerama code, and "-no-libsexy" to bypass using libsexy (some people experience hangs when using the library).
+- Added switches: "-disable-monitors-check" to bypass xinerama code, "-no-libsexy" to bypass using libsexy (some people experience hangs when using the library), and "-update" (see above)
+- Changed: More robust message body text handling
+- Changed: login procedure caused by Gmail breaking things
+- Changed: mail actions now work with new version of Gmail
+- Changed: compose mail link (not ideal right now, but at least it works) (thanks to chrisamiller for providing this patch)
+- BUGFIX: User prefs directory now created without global read/write access!
+- BUGFIX: Checkgmail now works better with multiple monitors
 
 (Version 1.12 - 19/6/07)
 - New Feature: URIs are clickable (if libsexy and Gtk2-Sexy (Perl bindings to libsexy) are installed).  Sorry, these will probably require downloading the source and building by hand, so at the moment it's not for the feint-hearted.  But it's well worth it, I reckon :)
