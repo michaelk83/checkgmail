@@ -5,7 +5,7 @@
 # system tray; optionally saves password in encrypted form using
 # machine-unique passphrase
 
-# version 1.12.1svn (25/6/2007)
+# version 1.13svn (14/2/2008)
 # Copyright © 2005-7 Owen Marshall
 
 # This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ use strict;
 
 my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy, $nologin);
 BEGIN {
-	$version = "1.12.1svn";
+	$version = "1.13svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
@@ -180,6 +180,7 @@ BEGIN {
 	use Thread::Queue;
 	use Thread::Semaphore;
 	use threads::shared;
+	use Encode;
 	use XML::Simple;
 	use FileHandle;
 	use LWP::UserAgent;
@@ -1130,7 +1131,10 @@ sub clean_text {
 	s/&(?>([\w\d\,\.]+))(?!;)/\&amp;$1/g; #not a great fix, but at least it's simple (heavy irony ... :)
 	s/&nbsp;/ /g;
 	# s/\\n/\n/g;
-	return $_;
+	# Encode::from_to($body, 'utf-8', 'iso-8859-15');
+	my $body_decode= decode("utf-8", $_);
+
+	return $body_decode;
 }
 
 sub clean_text_body {
@@ -1168,7 +1172,6 @@ sub clean_text_body {
 	# s/&(?>([\w\d\,\.]+))(?!;)/\&amp;$1/g; #not a great fix, but at least it's simple (heavy irony ... :)
 	s/&nbsp;/ /g;
 	# s/\\n/\n/g;
-	use Encode;
 	# Encode::from_to($body, 'utf-8', 'iso-8859-15');
 	my $body_decode= decode("utf-8", $_);
 
