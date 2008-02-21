@@ -1051,8 +1051,8 @@ sub check {
 						
 			# clean text for Pango compatible display ...
 			$title = clean_text($title);
-			$author = clean_text($author);
-			$summary = clean_text($summary);
+			$author = clean_text_and_decode($author);
+			$summary = clean_text_and_decode($summary);
 			
 			my ($year, $month, $day, $hour, $min, $sec) = ($issued =~ m/(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)Z/);
 			my $time_abs = $sec+$min*60+$hour*3600+$day*86400+$month*2678400+$year*32140800;
@@ -1094,7 +1094,7 @@ sub check {
 		# Create popup text
 		if ($popup_authors) {
 			$popup_authors =~ s/, ([\w\s-]+)$/ $trans{notify_and} $1/; # replace final comma with "and"
-			$popup_authors = clean_text($popup_authors);
+			$popup_authors = clean_text_and_decode($popup_authors);
 			$popup_text = "<span foreground=\"#000000\"><small>$trans{notify_new_mail}$popup_authors ...</small></span>";
 		}
 		
@@ -1116,8 +1116,8 @@ sub check {
 	return 1;
 }
 
-
-sub clean_text {
+# Note -- for some reason (?? why ??) the title does not need decoding; all other data apparently does.  Very strange ...
+sub clean_text_and_decode {
 	($_) = @_;
 	# some basic replacements so that the text is readable ...
 	# (these aren't used by pango markup, unlike other HTML escapes)
@@ -1136,6 +1136,24 @@ sub clean_text {
 
 	return $body_decode;
 }
+
+sub clean_text {
+	($_) = @_;
+	# some basic replacements so that the text is readable ...
+	# (these aren't used by pango markup, unlike other HTML escapes)
+	s/&hellip;/\.\.\./g;
+	s/&\s/\&amp; /g;
+	s/\\u003c/</g;
+	# s/\\n//g;
+	s/<br\s*\/*\\*>/\n/g;
+	s/</\&lt;/g;
+	s/>/\&gt;/g;
+	s/&(?>([\w\d\,\.]+))(?!;)/\&amp;$1/g; #not a great fix, but at least it's simple (heavy irony ... :)
+	s/&nbsp;/ /g;
+	# s/\\n/\n/g;
+	return $_;
+}
+
 
 sub clean_text_body {
 	($_) = @_;
