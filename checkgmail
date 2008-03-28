@@ -1051,7 +1051,7 @@ sub check {
 						
 			# clean text for Pango compatible display ...
 			$title = clean_text($title);
-			$author = clean_text_and_decode($author);
+			$author = clean_text($author);
 			$summary = clean_text_and_decode($summary);
 			
 			my ($year, $month, $day, $hour, $min, $sec) = ($issued =~ m/(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)Z/);
@@ -1709,6 +1709,7 @@ sub notify {
 		show_notify($win_notify_temp);
 	} else {
 		$win_notify->destroy if $win_notify;
+		$win_notify="";
 		$win_notify = $win_notify_temp;
 	}
 }
@@ -1938,6 +1939,7 @@ sub show_notify {
 
 	if ($win_notify_temp) {
 		$win_notify->destroy;
+		$win_notify="";
 		$win_notify=$new_win;
 	}
 	
