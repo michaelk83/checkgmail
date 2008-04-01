@@ -1050,8 +1050,8 @@ sub check {
 			my $author = $author_name || $author_mail;
 						
 			# clean text for Pango compatible display ...
-			$title = clean_text($title);
-			$author = clean_text($author);
+			$title = clean_text_and_decode($title);
+			$author = clean_text_and_decode($author);
 			$summary = clean_text_and_decode($summary);
 			
 			my ($year, $month, $day, $hour, $min, $sec) = ($issued =~ m/(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)Z/);
@@ -1132,8 +1132,14 @@ sub clean_text_and_decode {
 	s/&nbsp;/ /g;
 	# s/\\n/\n/g;
 	# Encode::from_to($body, 'utf-8', 'iso-8859-15');
-	my $body_decode= decode("utf-8", $_);
-
+	# eval { decode("utf8", $_, Encode::FB_CROAK); };
+	# my $body_decode = $@ ? $_ : decode("utf8", $_);
+	#my $body_decode= decode("utf-8", $_);
+	
+	# I have no idea why this works ...
+	my $body_encode = encode("utf8", $_);
+	my $body_decode = decode("utf8", $body_encode);
+	
 	return $body_decode;
 }
 
@@ -1191,7 +1197,12 @@ sub clean_text_body {
 	s/&nbsp;/ /g;
 	# s/\\n/\n/g;
 	# Encode::from_to($body, 'utf-8', 'iso-8859-15');
-	my $body_decode= decode("utf-8", $_);
+	# eval { decode("utf8", $_, Encode::FB_CROAK); };
+	# my $body_decode = $@ ? $_ : decode("utf8", $_);
+	# my $body_encode = encode("utf8", $_);
+	
+	# I have no idea why this works either ...
+	my $body_decode = decode("utf8", $_);
 
 	return $body_decode;
 }
@@ -1522,8 +1533,7 @@ sub notify {
 			$title_l_ebox->signal_handler_disconnect($s2);
 			unless ($mb) {
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
-				$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&ww=1173&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
-				# $request->enqueue("GET:".gen_prefix_url()."/?ui=2&ik=b8bb7ca6af&view=cv&search=all&th=$id&rt=j&prf=1");
+				$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
