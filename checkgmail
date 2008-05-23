@@ -727,8 +727,10 @@ sub http_check {
 			} else {
 				# hosted domains work differently ...
 				# First we POST a login
-				$error = http_get("https://www.google.com/a/$hosted/LoginAction|at=null&continue=http%3A%2F%2Fmail.google.com%2Fa%2F$hosted&service=mail&userName=$URI_user&password=$URI_passwd", "POST");
-				
+				# $error = http_get("https://www.google.com/a/$hosted/LoginAction|at=null&continue=http%3A%2F%2Fmail.google.com%2Fa%2F$hosted&service=mail&userName=$URI_user&password=$URI_passwd", "POST");
+				# thanks to Olinto Neto for this fix for hosted domains:
+				$error = http_get("https://www.google.com/a/$hosted/LoginAction2|at=null&continue=http%3A%2F%2Fmail.google.com%2Fa%2F$hosted&service=mail&Email=$URI_user&Passwd=$URI_passwd", "POST");
+
 				# Then we grab the HID ("Hosted ID"?) cookie
 				$cookie_jar->scan(\&scan_at);
 				
