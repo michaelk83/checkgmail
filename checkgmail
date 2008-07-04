@@ -31,7 +31,10 @@ use strict;
 # Command-line processing
 #
 
-my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, $private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, $popup_persistence, $usekwallet, $libsexy, $nologin);
+# global variables (can't be set global in the BEGIN block)
+my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, 
+		$private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, 
+		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug);
 BEGIN {
 	$version = "1.13svn";
 	$silent = 1;
@@ -109,6 +112,18 @@ BEGIN {
 				$update = 1;
 				last };
 				
+				
+			/numbers/ && do {
+				$mailno = 1;
+				last };
+				
+			/debug/ && do {
+				$debug = 1;
+				$silent = 0;
+				last };
+				
+				
+				
 			print "CheckGmail v$version\nCopyright © 2005-7 Owen Marshall\n\n";
 			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-update] [-h]\n\n";
 			exit 1;
@@ -162,6 +177,7 @@ BEGIN {
 	my $failed_packages;
 		
 	my $eval_sub = sub {
+		print "$_\n" if $debug;
 		eval $_;
 		if ($@) {
 			return unless m/(use|require)\s*([\w:-]+).*?\;/;
@@ -467,6 +483,7 @@ set_icons();
 
 my $image = Gtk2::Image->new_from_pixbuf($no_mail_pixbuf);
 
+
 ##############
 # Setup tray
 #
@@ -492,6 +509,15 @@ my @labels;
 
 $eventbox->add($tray_hbox);
 $tray_hbox->pack_start($image,0,0,0);
+
+# number of new mail messages (use -numbers)
+my $number_label;
+if ($mailno) {
+	$number_label = Gtk2::Label->new;
+	$number_label->set_markup("0");
+	$tray_hbox->pack_start($number_label,0,0,0);
+	$number_label->hide;
+}
 
 
 ########################
@@ -1372,6 +1398,14 @@ sub notify {
 	# Why?  Because tooltips can't do nice pango markup! :-)
 	my ($status, $text) = @_;	
 	my $new_mail = @messages;
+	
+	# display number of messages
+	if ($mailno) {
+		print "setting \"$new_mail\"\n";
+		$number_label->set_markup("$new_mail");
+		$new_mail ? $number_label->show : $number_label->hide;
+		# $new_mail ? $number_label->set_markup("$new_mail") : $number_label->set_markup(" ")
+	}
 	
 	my @sorted_messages = sort {$b->{time} <=> $a->{time}} @messages;
 	@messages = @sorted_messages;
