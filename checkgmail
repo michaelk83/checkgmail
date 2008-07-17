@@ -757,7 +757,12 @@ sub http_check {
 			unless ($hosted) {
 				# Normal Gmail login action ...
 				$error = http_get("https://www.google.com/accounts/ServiceLoginAuth?ltmpl=yj_wsad&ltmplcache=2&continue=https%3A%2F%2Fmail.google.com%2Fmail%3F&service=mail&rm=false&ltmpl=yj_wsad&Email=$URI_user&Passwd=$URI_passwd&rmShown=1&null=Sign+in", "LOGIN");
-				# $cookie_jar->scan(\&scan_at);
+
+				$cookie_jar->scan(\&scan_at);
+				unless ($error || !$gmail_sid || !$gmail_gausr) {
+					$error = http_get("https://mail.google.com/mail/?auth=$gmail_sid&gausr=$gmail_gausr", 'GET');
+				}
+
 				# $error = http_get("https://mail.google.com/mail?nsr=0&auth=$gmail_sid&gausr=$gmail_gausr", "LOGIN");
 	
 			} else {
