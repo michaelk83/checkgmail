@@ -433,18 +433,23 @@ my $prefs_file = "$prefs_file_nonxml.xml";
 $gmail_address = gen_prefix_url()."/feed/atom";
 # $gmail_address = $hosted ? "mail.google.com/a/$hosted/feed/atom" : "mail.google.com/mail/feed/atom";
 
+# for every gmail action ...
 my %gmail_act = (
 	archive => 'rc_%5Ei',
 	read => 'rd',
 	spam => 'sp',
 	delete => 'tr',
+	star => 'st',
+	unstar => 'xst',
 );
 
+# ... there's a gmail re-action :)
 my %gmail_undo = (
 	archive => 'ib',
 	read => 'ur',
 	spam => 'us',
 	delete => 'ib:trash',
+	star => 'xst',
 );
 
 my @undo_buffer;
@@ -479,10 +484,10 @@ unless (-d $icons_dir) {
 
 print "Parent: Loading icon data ...\n" if $debug;
 # we load the pixmaps as uuencoded data
-my ($error_data, $no_mail_data, $mail_data, $compose_mail_data);
+my ($error_data, $no_mail_data, $mail_data, $compose_mail_data, $star_on_data, $star_off_data);
 load_icon_data();
 
-my ($no_mail_pixbuf, $mail_pixbuf, $error_pixbuf);
+my ($no_mail_pixbuf, $mail_pixbuf, $error_pixbuf, $star_pixbuf, $nostar_pixbuf);
 my ($custom_no_mail_pixbuf, $custom_mail_pixbuf, $custom_error_pixbuf);
 set_icons();
 
@@ -1569,14 +1574,22 @@ sub notify {
 		my $hbox_t = Gtk2::HBox->new(0,0);
 		$notify_vbox->pack_start($hbox_t,0,0,0);
 		
+		my $vbox_t = Gtk2::VBox->new(0,0);
+		$hbox_t->pack_start($vbox_t,0,0,0);	
+		
+		my $hbox_tt = Gtk2::HBox->new(0,0);
+		$vbox_t->pack_start($hbox_tt,0,0,0);
+			
+				
+		
 		my $title_l = Gtk2::Label->new;
-		$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>\n<b>$trans{notify_from}</b> $author");
+		$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>");
 		$title_l->set_line_wrap(1);
 		
 		my $title_l_ebox = Gtk2::EventBox->new();
 		$title_l_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
-		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u><i>$title</i></u></b></span><small> <span foreground=\"#006633\">$label</span></small>\n<b>$trans{notify_from}</b> $author")});
-		my $s2 = $title_l_ebox->signal_connect(leave_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>\n<b>$trans{notify_from}</b> $author")});
+		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u><i>$title</i></u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
+		my $s2 = $title_l_ebox->signal_connect(leave_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
 		$title_l_ebox->signal_connect(button_press_event=>sub{
 			# grabbing the full text of a message!
 			return unless $cookies;
@@ -1594,7 +1607,49 @@ sub notify {
 		});
 		
 		$title_l_ebox->add($title_l);		
-		$hbox_t->pack_start($title_l_ebox,0,0,0);
+		$hbox_tt->pack_start($title_l_ebox,0,0,0);
+		
+		# my god, gtk2 has the most stupid packing routines imaginable!!!
+		my $hbox_from = Gtk2::HBox->new(0,0);
+		$vbox_t->pack_start($hbox_from,0,0,0);
+		
+		# Starring messages
+		my $star_i = Gtk2::Image->new();
+		if ($messages_ext{$id}->{star}) {
+			$star_i->set_from_pixbuf($star_pixbuf);
+		} else {
+			$messages_ext{$id}->{star}=0;
+			$star_i->set_from_pixbuf($nostar_pixbuf);
+		}
+		
+		my $star_ebox = Gtk2::EventBox->new();
+		$star_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
+		$star_ebox->signal_connect(button_press_event=>sub{
+			# setting the star
+			return unless $cookies;
+			$messages_ext{$id}->{star} = 1-$messages_ext{$id}->{star};
+			if ($messages_ext{$id}->{star}) {
+				$star_i->set_from_pixbuf($star_pixbuf);
+				$request->enqueue(gen_action_url($gmail_act{star},$id));
+			} else {
+				$star_i->set_from_pixbuf($nostar_pixbuf);
+				$request->enqueue(gen_action_url($gmail_act{unstar},$id));
+			}				
+		});	
+		
+		$star_ebox->add($star_i);		
+		
+		my $star_space = Gtk2::HBox->new(0,0);
+		$star_space->set_border_width(3);	
+		
+		
+		my $from_l = Gtk2::Label->new;
+		$from_l->set_markup("<b>$trans{notify_from}</b> $author");
+		$from_l->set_line_wrap(1);
+		
+		$hbox_from->pack_start($from_l,0,0,0);
+		$hbox_from->pack_start($star_space,0,0,0);	
+		$hbox_from->pack_start($star_ebox,0,0,0);	
 		
 		if ($messages_ext{$id}->{attachment}) {
 			$att = $messages_ext{$id}->{attachment};
@@ -1867,7 +1922,9 @@ sub gen_action_url {
 	# Now that we can grab the full text of messages, we'd better clear the cache while we're here ...
 	# NB - I realise this won't remove all cached text, in the rare event someone looks at the full message text,
 	# and then opens it manually in the webbrowser - but it's the simplest solution for now ...
-	$messages_ext{$id}=undef;
+	unless ($act =~ m/st/) {
+		$messages_ext{$id}=undef;
+	}
 	
 	# Undeleting items from trash needs to have the search variable as "trash"
 	# - this is a quick hack to get around it!
@@ -2940,6 +2997,8 @@ sub set_icons {
 	$mail_pixbuf = load_pixbuf($mail_data);
 	$no_mail_pixbuf = load_pixbuf($no_mail_data);
 	$error_pixbuf = load_pixbuf($error_data);
+	$star_pixbuf = load_pixbuf($star_on_data);
+	$nostar_pixbuf = load_pixbuf($star_off_data);
 	
 	# load custom icons if defined
 	$custom_mail_pixbuf = Gtk2::Gdk::Pixbuf->new_from_file($mail_icon) if $mail_icon;
@@ -3068,6 +3127,41 @@ MKS4U+5O8%(F0W)WDP<P,6[<,`.#UR:RM?6\'\V#BRRQF=MCD(:D\'"H0"I@ZDF
 M-G7[%EY9PC1-%`)-W-4:.9N%A:><.\'FZ"36L.A<O3;"XM(1A"`>]Q2";R7`H
 MG:9>-;$;#:Q:%0F)AM5@YX[M%-<_=VY!UW42R3T_+F2?@^@!%%6CMR^&KNMM
 B#2;O3$]=_HN/.,G_J.\25[KK%,1Y@@````!)14Y$KD)@@@``');
+
+	$star_on_data = unpack("u",
+'MB5!.1PT*&@H````-24A$4@```!`````0"`8````?\_]A````!\'-"250("`@(
+M?`ADB`````EP2%ES```-UP``#=<!0BB;>````!ET15AT4V]F=\'=A<F4`=W=W
+M+FEN:W-C87!E+F]R9YON/!H```)\241!5#B-G5-=2U11%%W[W\'-GQID[V1A^
+MI2/-1&9?.D%*,>)3/?10T4-%)4R1^!1!1(\1%/4#`B\'ZH!DMD`KRH;>@\'IIK
+M0F$@E*$&HYD.(I0?,Z-S[SV[A]`<\'%_:<&"S66NOM0[G$#.C6)D)JA="O`-1
+M3CG.L6B,AXOA1%$V`")Q,]AXN7);Y\'I("\'%G(QR8>=U)QE\'1W^.V\'&N6E3W\'
+M\'YX9=C*.ZF+8C1QT5NUH9U(_`?LKMNZZQ``ZBSI-QN$"<`5`2`BMAHBJ&=38
+M<BKE$3P,J%]P1#,^OMRY3\'"&F\'E:*6<2P#B`>V1VBQ?EX=,G:O=>TZ6[$IHT
+M0)H/1*Y_,FH!2EFP<Q/(YU+(9Z=X:OBA-3\[]$:P4JD2?UB4E!Z`[@E"R$`A
+M&0"$%\33D\'(*/K\;@=J3Y/+5"&9.43(./PG15Q$^W[;]8)<D`0`Z``6H!;"3
+M!NP)L#T&0$#I;1A)7K5^I]\/L%+\'B9EA)D@2T7VW$;JP[W"W)C$`ML8!7@(X
+M\_>R9!UL[2B^O.UP<O-CO<Q\,1IC2P)`-,8V@`XS09[TV/,SM0U\')%2V,(:K
+M$3.CK^WLW&A?-,;M*V-9$%73*XPM$0EA@/0&0!@`"%`+@/##*&N20G-5%7!6
+M&C-!Q$R\'O(\'](*T6Y&E%+K<)V44/R-,*TH(HV=P$5JK93-"J\%H\'>Z2[S\'!Y
+MZV\';B_@Q>,M*CSY>)I!=\'C[KJXO<UG5O$+JWRI7/3$8`?"IP`*!461F5\'GG`
+M@Z\:G/3(HUYVED+*R85FOO<\^=RW6TU_ZV)E916`TM67N/8W]O>XGQ*)@\'*6
+M[D9C;*[-:B:H16B>&\PJPRI_+AICM6[!_]0?8_PDB6*NF@(`````245.1*Y"
+"8((`');
+
+	$star_off_data = unpack("u",
+'MB5!.1PT*&@H````-24A$4@```!`````0"`8````?\_]A````!\'-"250("`@(
+M?`ADB````?9)1$%4.(VMD\%J$V$4A;_)C&,F36B2,;1-:TA;720N3+.H@R!(
+M$0*&K+((:.)3]`&ZRK)TF3?(&R3071]`*18B5!$%H8(FFC).F.DTU\4,4FLB
+M")[5SW_//=S_W/.KS(<.;`(F8`.7LTB1OPB8@\\\'@SG`XO`_<FD>:)Z#&X_%D
+MH5!82Z?3J5PNEP2T?Q%(=CJ=-/`)^\'!P<)`"DK.("J"&Q1OA60-BCN,4#<-X
+M"7B3R>11+!9[#3@$7OC`!?!=`Y;W]_=7&XW&RG0ZO5A<7-0U33,,P_@!?%04
+M143$=EUWRW5=9SP>>Y%(1.UVNY]W=W?/-.`RG\\\\;V6QV"7@#O`<FP#=%422<
+MM*?K>E+7=2.12*P#]\KELA,^D0BPMK>WM^W[?DM$[L[Q!1\'9%)$7[7;[`7#[
+MNH=+]7I]RW7=9R*R/J,YY_O^\V:S60:60__^0+[?[S\6D8<S!+:/CHYV@(VK
+M]]?7Z)=*I07@2]BT(B*K8>UKL5A<(-C`+UP/1RR3R9C`1$2>>IZ7\#Q/1,0!
+M7J52*1,PYDUPLU:KQ555C0([AX>\'MFF:)Z9IGO1ZO7/@B:JJ>JO52@#160):
+M-!J=CD:CD659QY5*Y9UMVZ>>YYU6J]6WEF4=V[9]KBC*)4\'H@-^=5`C<58$1
+C0>JNPB#XF5/@#!#^!WX"JHNT6FM(-L<`````245.1*Y"8((`');
 	
 }
 
