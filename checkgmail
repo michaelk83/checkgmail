@@ -1609,11 +1609,28 @@ sub notify {
 		$title_l_ebox->add($title_l);		
 		$hbox_tt->pack_start($title_l_ebox,0,0,0);
 		
+		# short spacer
+		my $title_spacer = Gtk2::HBox->new(0,0);
+		$title_spacer->set_border_width(1);
+		$vbox_t->pack_start($title_spacer,0,0,0);
+		
 		# my god, gtk2 has the most stupid packing routines imaginable!!!
 		my $hbox_from = Gtk2::HBox->new(0,0);
 		$vbox_t->pack_start($hbox_from,0,0,0);
 		
-		# Starring messages
+		
+		# --- Starring messages ---
+		# Note: there's no way to check the star-status of a message from the atom feed
+		# of course, we're gradually getting to the stage where it'd be much easier to
+		# poll the server via http requests now, than to retrieve messages via the feed.
+		# (I'm thinking about it!  Definitely thinking about it ... :)
+		#
+		# In the meantime, the icon adds a quick way to star messages that you'd like
+		# to come back to later, but ignore for the present.
+		
+		# Star icons are taken from Mozilla Firefox 3 (http://getfirefox.com), licensed under
+		# the Creative Commons license
+		
 		my $star_i = Gtk2::Image->new();
 		if ($messages_ext{$id}->{star}) {
 			$star_i->set_from_pixbuf($star_pixbuf);
@@ -1642,7 +1659,7 @@ sub notify {
 		my $star_space = Gtk2::HBox->new(0,0);
 		$star_space->set_border_width(3);	
 		
-		
+		# From: line (with star)
 		my $from_l = Gtk2::Label->new;
 		$from_l->set_markup("<b>$trans{notify_from}</b> $author");
 		$from_l->set_line_wrap(1);
@@ -1651,6 +1668,8 @@ sub notify {
 		$hbox_from->pack_start($star_space,0,0,0);	
 		$hbox_from->pack_start($star_ebox,0,0,0);	
 		
+		
+		# --- Attachment icon ---
 		if ($messages_ext{$id}->{attachment}) {
 			$att = $messages_ext{$id}->{attachment};
 			my ($image_name) = ($att =~ m/.*\/(.*)$/);		
