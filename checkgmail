@@ -200,6 +200,8 @@ BEGIN {
 	use XML::Simple;
 	use FileHandle;
 	use LWP::UserAgent;
+	# use LWP::Debug qw(+);
+	use HTTP::Request::Common;
 	use Crypt::SSLeay;
 	")) {&$eval_sub($_)};
 	if ($failed_packages) {
@@ -728,6 +730,8 @@ sub http_check {
 		
 	# set up the useragent ....
 	$ua = LWP::UserAgent->new();
+	$ua->requests_redirectable (['GET', 'HEAD', 'POST']);
+	# push @{ $ua->requests_redirectable }, 'POST';
 	
 	# set time-out - defaults to 90 seconds or $delay, whichever is shorter
 	$ua->timeout($delay/1000<90 ? $delay/1000 : 90);	
@@ -765,7 +769,7 @@ sub http_check {
 
 				$cookie_jar->scan(\&scan_at);
 				unless ($error || !$gmail_sid || !$gmail_gausr) {
-					$error = http_get("https://mail.google.com/mail/?auth=$gmail_sid&gausr=$gmail_gausr", 'GET');
+					$error = http_get("https://mail.google.com/mail/?pli=1&auth=$gmail_sid&gausr=$gmail_gausr", 'LOGIN');
 				}
 
 				# $error = http_get("https://mail.google.com/mail?nsr=0&auth=$gmail_sid&gausr=$gmail_gausr", "LOGIN");
@@ -879,6 +883,14 @@ sub http_get {
 		my $req = HTTP::Request->new('GET' => "$address");
 
 		my $response = $ua->request($req);
+		# if(! $response->is_success) {
+    		# print "### $address\n => ", $response->status_line, "\n"
+  		# } elsif($response->previous and $response->previous->is_redirect) {
+    		# print "## Moved $address\n## => ", $response->request->url, "\n";
+  		# } else {
+    		# print "## OK: $address\n";
+  		# }
+
 		if ($response->is_error) {
 			my $code = $response->code;
 			my $message = $response->message;
@@ -886,15 +898,18 @@ sub http_get {
 			$http_status->enqueue($error);
 		}
 		my $http = $response->content;
-		# print "\n--------\n$http\n";
+		my $code = $response->code;
+		my $message = $response->message;
 		
 		# New google accounts use a strange javascript/meta-refresh redirect ...
 		# ... but we catch them with this! :)
 		if ($http =~ m/location\.replace\("(.*)"\)/) {
 			my $new_addr = $1;
 			$new_addr =~ s/\\u003d/=/g;
+			$new_addr =~ s/\\x3d/=/g;
 			$new_addr =~ s/\\075/=/g;
 			$new_addr =~ s/\\46/&/g;
+			$new_addr =~ s/\\x26/&/g;
 			$new_addr =~ s/\\75/=/g;
 			return unless $new_addr =~ m/^http/i;
 			
@@ -902,6 +917,13 @@ sub http_get {
 			
 			my $req2 = HTTP::Request->new('GET' => "$new_addr");
 			my $response2 = $ua->request($req2);
+			# if(! $response->is_success) {
+    			# print "### $address\n => ", $response->status_line, "\n"
+  			# } elsif($response->previous and $response->previous->is_redirect) {
+    			# print "## Moved $address\n## => ", $response->request->url, "\n";
+  			# } else {
+    			# print "## OK: $address\n";
+  			# }
 			if ($response2->is_error) {
 				my $code = $response2->code;
 				my $message = $response2->message;
