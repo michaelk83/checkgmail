@@ -912,6 +912,7 @@ sub http_get {
 			$new_addr =~ s/\\x26/&/g;
 			$new_addr =~ s/\\75/=/g;
 			return unless $new_addr =~ m/^http/i;
+			$new_addr =~ s/^http(?!s)/https/;
 			
  			print "\nNew login method: manually following redirect address $new_addr ...\n\n" unless $silent;
 			
@@ -2092,16 +2093,22 @@ sub show_notify {
 	
 	# move the window
 	$new_win->move($move_x,$move_y) if ($move_x || $move_y);
-	$new_win->show_all unless ($new_win->visible);
+	Gtk2->main_iteration while (Gtk2->events_pending);
 	
-	# $scrolled->set_vadjustment($vadj) if $vadj;
+	# $new_win->show_all unless ($new_win->visible);
+	# Gtk2->main_iteration while (Gtk2->events_pending);
 
+	# $scrolled->set_vadjustment($vadj) if $vadj;
+	
+	# a small sleep to make compiz work better
+	# select(undef, undef, undef, 0.150);
 	if ($win_notify_temp) {
 		$win_notify->destroy;
 		$win_notify="";
 		$win_notify=$new_win;
 	}
-	
+	# Gtk2->main_iteration while (Gtk2->events_pending);
+
 	
 	($old_x, $old_y) = ($move_x,$move_y);
 	
