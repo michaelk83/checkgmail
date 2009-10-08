@@ -896,8 +896,12 @@ sub http_get {
 		my $http = $response->content;
 
 		# Find the value of the GALX input field
-		my ($post_galx) = ($http =~ m/"GALX".*?value="(.*?)"/ismg) || return "Error: No GALX input field found";
-		$post_galx = URI_escape(URI_unescape($post_galx));
+		if($http !~ m/<input[^>]+name="GALX"[^>]*value="([^"]*)"/ig) {
+			return "Error: No GALX input field found";
+		}
+		my $post_galx = URI_escape(URI_unescape($1));
+		# my ($post_galx) = ($http =~ m/"GALX".*?value="(.*?)"/ismg) || return "Error: No GALX input field found";
+		# $post_galx = URI_escape(URI_unescape($post_galx));
 
 		# Find the data to post
 		my $post_data;
