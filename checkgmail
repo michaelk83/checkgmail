@@ -768,7 +768,7 @@ sub http_check {
 				$error = http_get("Email=".$URI_user."&Passwd=".$URI_passwd, "LOGIN");
 
 				$cookie_jar->scan(\&scan_at);
-				unless ($gmail_at || !$gmail_sid || !$gmail_gausr) {
+				unless ($error || !$gmail_sid || !$gmail_gausr) {
 					$error = http_get("https://mail.google.com/mail/?pli=1&auth=$gmail_sid&gausr=$gmail_gausr", 'LOGIN');
 				}
 
