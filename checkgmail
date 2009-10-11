@@ -40,7 +40,7 @@ BEGIN {
 	$Rev="";
 	$.="";
 	
-	$version = "1.13svn rev$Rev$.";
+	$version = "1.13svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
