@@ -34,9 +34,13 @@ use strict;
 # global variables (can't be set global in the BEGIN block)
 my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, 
 		$private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, 
-		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug);
+		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug, $Rev);
 BEGIN {
-	$version = "1.13svn";
+	# SVN fake-variable stuff
+	$Rev="";
+	$.="";
+	
+	$version = "1.13svn rev$Rev$.";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
@@ -896,26 +900,24 @@ sub http_get {
 		my $http = $response->content;
 
 		# Find the value of the GALX input field
-		if($http !~ m/<input[^>]+name="GALX"[^>]*value="([^"]*)"/ig) {
+		my ($post_galx) = ($http =~ m/"GALX".*?value="(.*?)"/ismg);
+		unless ($post_galx) {
+			print "Error: No GALX input field found\n";
 			return "Error: No GALX input field found";
 		}
-		my $post_galx = URI_escape(URI_unescape($1));
-		# my ($post_galx) = ($http =~ m/"GALX".*?value="(.*?)"/ismg) || return "Error: No GALX input field found";
-		# $post_galx = URI_escape(URI_unescape($post_galx));
-
+		$post_galx = URI_escape(URI_unescape($1));
+		
 		# Find the data to post
 		my $post_data;
 		$post_data = "ltmpl=default&ltmplcache=2&continue=http://mail.google.com/mail/?ui%3Dhtml&service=mail&rm=false&scc=1&GALX=$post_galx&$address&PersistentCookie=yes&rmShown=1&signIn=Sign+in&asts=";
 		print "Logging in with post data $post_data\n" unless $silent;
 
 		# Send the post data to the login URL
-		my $post_req;
-		my $post_response;
-		$post_req = HTTP::Request->new('POST' => "https://www.google.com/accounts/ServiceLoginAuth?service=mail");
+		my $post_req = HTTP::Request->new('POST' => "https://www.google.com/accounts/ServiceLoginAuth?service=mail");
 		$post_req->content_type('application/x-www-form-urlencoded');
 		$post_req->content($post_data);
-		$post_response = $ua->request($post_req);
-		if($post_response->is_error) {
+		my $post_response = $ua->request($post_req);
+		if ($post_response->is_error) {
 			my $code = $response->code;
 			my $message = $response->message;
 			$error = "Error: $code $message";
@@ -943,8 +945,7 @@ sub http_get {
 				$http_status->enqueue($error);
 				return $error;
 			}
-		}
-		else {
+		} else {
 			print "No location.replace found in HTML:\n".$post_http unless $silent;
 		}
 		
