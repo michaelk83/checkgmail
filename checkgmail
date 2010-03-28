@@ -503,6 +503,7 @@ my $image = Gtk2::Image->new_from_pixbuf($no_mail_pixbuf);
 print "Parent: Setting up system tray ...\n" if $debug;
 my $tray = Gtk2::TrayIcon->new("gmail");
 my $eventbox = Gtk2::EventBox->new;
+my $ebox2 = Gtk2::EventBox->new;
 my $tray_hbox = Gtk2::HBox->new(0,0);
 $tray_hbox->set_border_width(2);
 
@@ -520,7 +521,8 @@ my %messages_ext;
 my %issued_h;
 my @labels;
 
-$eventbox->add($tray_hbox);
+$eventbox->add($ebox2);
+$ebox2->add($tray_hbox);
 $tray_hbox->pack_start($image,0,0,0);
 
 # number of new mail messages (use -numbers)
