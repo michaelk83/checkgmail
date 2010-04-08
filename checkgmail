@@ -36,10 +36,11 @@ my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_
 		$private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, 
 		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug);
 BEGIN {
-	$version = "1.13svn";
+	$version = "1.14pre-svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
+	$nologin = 1;
 	$show_popup_delay = 250;
 	$popup_persistence = 100;
 	
@@ -124,8 +125,8 @@ BEGIN {
 				
 				
 				
-			print "CheckGmail v$version\nCopyright © 2005-7 Owen Marshall\n\n";
-			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-update] [-h]\n\n";
+			print "CheckGmail v$version\nCopyright © 2005-10 Owen Marshall\n\n";
+			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-numbers] [-update] [-h]\n\n";
 			exit 1;
 			
 		}	
@@ -529,9 +530,9 @@ $tray_hbox->pack_start($image,0,0,0);
 my $number_label;
 if ($mailno) {
 	$number_label = Gtk2::Label->new;
-	$number_label->set_markup("0");
-	$tray_hbox->pack_start($number_label,0,0,0);
 	$number_label->hide;
+	$number_label->set_markup("0");
+	$tray_hbox->pack_start($number_label,0,0,2);
 }
 
 

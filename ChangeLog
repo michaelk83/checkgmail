@@ -1,3 +1,9 @@
+(Version 1.14 - SVN, not yet released)
+- New Feature: Show the number of unread messages beside the tray icon with the -numbers switch.  It's pretty basic and ugly right now, but it works ok.  I may think about modifying the display to an iPhone-style numbers thing at some time in the future ... (This will require re-writing the tray icon code, but it's possible in theory).
+- Changed: Tray icon transparency should now work (I think!)  It's a kludgy hack, but it works for Ubuntu's default theme for Lucid Lynx (10.04), and seems to work for most other GTK themes.  Setting the tray icon background doesn't work anymore, and should be deprecated soon.
+- Changed: -no_login is now default behaviour (since we can no longer log into Gmail directly)
+- Lots of other bugfixes, compatibility fixes and changes
+
 (Version 1.13 - 19/1/08)
 - New Feature: -update command-line switch will download the latest version of the program from SVN and show the user a diff between the two versions, before asking the user if they want to upgrade.  This feature will hopefully be improved in newer versions (at the moment there is no version tracking or checking routinely for updates).
 - New Feature: Restart command in right-click menu (makes it easy to restart the program if it hangs on "Checking Gmail ...")
