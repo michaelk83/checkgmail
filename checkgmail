@@ -5,8 +5,8 @@
 # system tray; optionally saves password in encrypted form using
 # machine-unique passphrase
 
-# version 1.13svn (14/2/2008)
-# Copyright © 2005-7 Owen Marshall
+# version 1.14pre2-svn (4/11/2010)
+# Copyright © 2005-10 Owen Marshall
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_
 		$private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, 
 		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug);
 BEGIN {
-	$version = "1.14pre-svn";
+	$version = "1.14pre2-svn";
 	$silent = 1;
 	$profile = "";
 	$cookies = 1;
@@ -881,6 +881,21 @@ sub http_get {
 		$ua->request($req);
 		return;
 		
+	} elsif ($method eq 'POST_MB') {
+		# quick hack to grab the message text ...
+		my ($add1, $add2) = ($address =~ m/(.*)\|(.*)/);
+		# print "($add1, $add2)\n" unless $silent;
+		
+		my $req = HTTP::Request->new('POST' => $add1);
+  		$req->content_type('application/x-www-form-urlencoded');
+  		$req->content($add2);
+		
+		my $response = $ua->request($req);
+		
+		my $http = $response->content;
+		$label =~ s/\///g;
+		return "LABEL=$label\n$http";
+		
 	} elsif ($method eq 'LOGIN') {
 		# New LOGIN method written by Gerben van der Lubbe on Oct 6, 2009.
 		# (based in turn on vially's (https://sourceforge.net/users/vially/) PHP code.
@@ -1057,13 +1072,25 @@ sub check {
 		# uncomment below to see the datapack structure
 		print "atom:\n$atom\n\n" unless $silent;
 		
-		# mb is the message body ... and there's often more than one block!
+		# as of 2/11/10, we can no longer use the old ui=1 datapack
+		# Unfortunately, the new ui=2 datapack is quite a bit less pleasant
+		# to use, with no nice "mb" cues ...
+		
 		my ($mb, $ma); 
-		while ($atom =~ m/\["mb","(.*?)",\d\]/g) {
+		
+		# if ($atom =~ m/\["ms",.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,\[.*?"\].*?\[.*?\[.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/s) {#.*?,.*?,.*?,\[,.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/g);
+			# print "\n\n-----\nYYYYY!\n$1\n";
+		# } else {
+			# print "\n\n-----\nNOPE!\n\n";
+		# }
+		
+		# See what you've made me do, Google??  Just look at this fugly regex ...
+		while ($atom =~ m/\["ms",.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,\[.*?"\].*?\[.*?\[.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/sg) {
 			$mb .= "$1";
 		}
-		
+				
 		# ma is the attachment, if any
+		# (I suspect this doesn't work anymore with the new datapack ...)
 		while ($atom =~ m/\["ma",\[(.*?)\]/g) {
 			my $att = $1;
 			$ma = "/mail/images/paperclip.gif"; # default attachment
@@ -1077,7 +1104,7 @@ sub check {
 		print "cleaned text is\n$mb\n\n" unless $silent;
 						
 		# cs is the message id
-		my ($cs) = ($atom =~ m/\["cs","(.*?)"/);
+		my ($cs) = ($atom =~ m/.*\["ms","(.*?)"/s);
 		$messages_ext{$cs}->{text} = $mb;
 		$messages_ext{$cs}->{shown} = 1;
 		$messages_ext{$cs}->{attachment} = $ma;
@@ -1464,7 +1491,7 @@ sub notify {
 	
 	# display number of messages
 	if ($mailno) {
-		print "setting \"$new_mail\"\n";
+		# print "setting \"$new_mail\"\n";
 		$number_label->set_markup("$new_mail");
 		$new_mail ? $number_label->show : $number_label->hide;
 		# $new_mail ? $number_label->set_markup("$new_mail") : $number_label->set_markup(" ")
@@ -1634,13 +1661,18 @@ sub notify {
 		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u><i>$title</i></u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
 		my $s2 = $title_l_ebox->signal_connect(leave_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
 		$title_l_ebox->signal_connect(button_press_event=>sub{
-			# grabbing the full text of a message!
+			# grabbing the full text of a message
 			return unless $cookies;
 			$title_l_ebox->signal_handler_disconnect($s1);
 			$title_l_ebox->signal_handler_disconnect($s2);
 			unless ($mb) {
+				# print "Message ID = $id\n";
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
-				$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				#$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				
+				# As of 3/11/10, Gmail has removed access to the old ui=1 version of Gmail
+				# ui=2 requires a POST command to get the datapack (which has also changed formats slightly)
+				$request->enqueue("POST_MB:".gen_prefix_url()."/?ui=2&ik=b8bb7ca6af&rid=&view=cv&prf=1&_reqid=&nsc=1|&mb=0&rt=j&cat=all&search=cat&th=$id&at=$gmail_at");
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
