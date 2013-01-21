@@ -34,7 +34,7 @@ use strict;
 # global variables (can't be set global in the BEGIN block)
 my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, 
 		$private, $cookies, $popup_size, $hosted_tmp, $show_popup_delay, 
-		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $debug);
+		$popup_persistence, $usekwallet, $libsexy, $nologin, $mailno, $nobubbles, $bubbles_timeout, $debug);
 BEGIN {
 	$version = "1.14pre2-svn";
 	$silent = 1;
@@ -42,6 +42,7 @@ BEGIN {
 	$cookies = 1;
 	$nologin = 1;
 	$show_popup_delay = 250;
+	$bubbles_timeout = 5000;
 	$popup_persistence = 100;
 	
 	# simple command line option switch ...
@@ -116,15 +117,17 @@ BEGIN {
 				
 			/numbers/ && do {
 				$mailno = 1;
+
+			/nobubbles/ && do {
+				$nobubbles = 1;
+				last };
 				last };
 				
 			/debug/ && do {
 				$debug = 1;
 				$silent = 0;
 				last };
-				
-				
-				
+					
 			print "CheckGmail v$version\nCopyright © 2005-10 Owen Marshall\n\n";
 			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-numbers] [-update] [-h]\n\n";
 			exit 1;
@@ -204,6 +207,7 @@ BEGIN {
 	# use LWP::Debug qw(+);
 	use HTTP::Request::Common;
 	use Crypt::SSLeay;
+	use Desktop::Notify;
 	")) {&$eval_sub($_)};
 	if ($failed_packages) {
 		unless ($failed_packages =~ /Gtk2\s/) {
@@ -755,7 +759,20 @@ sub http_check {
 		{
 			# this loop is necessary as an incorrect login with Gmail's web form doesn't return a 401
 			# So we simply check for the Gmail_AT cookie as confirmation of a successful login
-			$http_status->enqueue($trans{notify_login});
+			if ($nobubbles) {
+				$http_status->enqueue($trans{notify_login});
+			} else {
+
+				# Create a notification to display
+				my $notify_bubble = Desktop::Notify->new();
+				my $notification_bubble = $notify_bubble->create(summary => 'CheckGmail',
+										body => $trans{notify_login},
+										#app_icon  => $mail_pixbuf, # Not supported by Desktop::Notify yet.
+										timeout => $bubbles_timeout);
+				# Display the notification
+				$notification_bubble->show();
+			}
+				
 
 			my $URI_user = URI_escape($user);
 	        	my $URI_passwd = URI_escape($passwd_decrypt);
@@ -1219,10 +1236,23 @@ sub check {
 		# Save current unread list
 		@popup_status = @messages;
 				
-		# Finally, display popup if there's any new mail
+		# Finally, display popup if there's new mail
 		# and run any command that the user has specified in the prefs
 		if ($popup_text) {
-			popup($popup_text);
+			if ($nobubbles) {
+				popup($popup_text);
+			} else {
+
+				# Create a notification to display
+				my $notify_bubble = Desktop::Notify->new();
+				my $notification_bubble = $notify_bubble->create(summary => 'CheckGmail',
+										body => $popup_text,
+										#app_icon  => $mail_pixbuf, # Not supported by Desktop::Notify yet.
+										timeout => $bubbles_timeout);
+				# Display the notification
+				$notification_bubble->show();
+			}
+			
 			run_command($notify_command) if $notify_command;
 		}
 				
@@ -1482,8 +1512,8 @@ sub convert_labels_from_array {
 #####################
 # Notify popups ...
 #
-
 sub notify {
+
 	# popup notify code to replace tooltips
 	# Why?  Because tooltips can't do nice pango markup! :-)
 	my ($status, $text) = @_;	
