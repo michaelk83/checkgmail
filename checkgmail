@@ -11,16 +11,16 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at
-# your option) any later version. 
-# 
+# your option) any later version.
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details. 
-# 
+# General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 # USA
 
 use strict;
@@ -32,11 +32,11 @@ use strict;
 #
 
 # global variables (can't be set global in the BEGIN block)
-my ($version, $silent, $nocrypt, $update, $notsexy, $profile, $disable_monitors_check, 
+my ($version, $silent, $nocrypt, $update, $profile, $disable_monitors_check,
 		$private, $cookies, $two_factor_auth_switch, $popup_size, $hosted_tmp, $show_popup_delay,
-		$popup_persistence, $use_kwallet, $libsexy, $nologin, $mailno, $debug);
+		$popup_persistence, $use_kwallet, $nologin, $mailno, $debug);
 
-# global name of the 3rd party CLI binary used to access kwallet (if kwallet integration is used). 
+# global name of the 3rd party CLI binary used to access kwallet (if kwallet integration is used).
 my $kwalletcli;
 
 BEGIN {
@@ -48,7 +48,7 @@ BEGIN {
 	$nologin = 1;
 	$show_popup_delay = 250;
 	$popup_persistence = 100;
-	
+
 	# simple command line option switch ...
 	foreach (@ARGV) {
 		next unless m/\-(.*)/;
@@ -56,35 +56,31 @@ BEGIN {
 			/profile=(.*)/ && do {
 				$profile = "-$1";
 				last };
-			
+
 			/private/ && do {
 				$private = 1;
-				last };		
-			
+				last };
+
 			/silent/ && do {
 				$silent = 1;
 				last };
-				
+
 			/disable-monitors-check/ && do {
 				$disable_monitors_check = 1;
 				last };
-				
-			/no-libsexy/ && do {
-				$notsexy = 1;
-				last };
-				
+
 			/no-login/ && do {
 				$nologin = 1;
 				last };
-				
+
 			/cookie_login/ && do {
 				$cookies = 1;
 				last };
-				
+
 			/no_cookies/ && do {
 				$cookies = 0;
 				last };
-				
+
 			/two_factor/ && do {
 				$two_factor_auth_switch = 1;
 				last };
@@ -92,56 +88,56 @@ BEGIN {
 			# /label=(.*),(\d+)/ && do {
 				# $label_tmp{$1} = $2;
 				# last };
-				
+
 			/hosted=(.*)/ && do {
 				$hosted_tmp = $1;
 				last };
-			
+
 			/popup_delay=(\d+)/ && do {
 				$show_popup_delay = $1;
 				last };
-				
+
 			/popup_size=(\d+)/ && do {
 				$popup_size = $1;
 				last };
-				
+
 			/popup_persistence=(\d+)/ && do {
 				$popup_persistence = $1;
 				last };
-			
+
 			(/v$/ || /verbose/) && do {
 				$silent = 0;
 				print "CheckGmail v$version\nCopyright Â© 2005-7 Owen Marshall\n\n";
 				last };
-				
+
 			/nocrypt/ && do {
 				$nocrypt = 1;
 				last };
-				
+
 			/update/ && do {
 				$update = 1;
 				last };
-				
-				
+
+
 			/numbers/ && do {
 				$mailno = 1;
 				last };
-				
+
 			/debug/ && do {
 				$debug = 1;
 				$silent = 0;
 				last };
-				
-				
-				
+
+
+
 			print "CheckGmail v$version\nCopyright © 2005-10 Owen Marshall\n\n";
-			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-two_factor] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-no-libsexy] [-disable-monitors-check] [-numbers] [-update] [-h]\n\n";
+			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-two_factor] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-disable-monitors-check] [-numbers] [-update] [-h]\n\n";
 			exit 1;
-			
-		}	
+
+		}
 	}
-}	
-	
+}
+
 
 #######################
 # Generate passphrase
@@ -150,18 +146,18 @@ BEGIN {
 my ($passphrase);
 BEGIN {
 	# passphrase generator - needs to run before Crypt::Simple is loaded ...
-	
+
 	# The idea here is to at least make a non-local copy of .checkgmail
 	# secure (for example, that found on a backup disc) - it's
 	# impossible to store the password safely without requiring a user-entered
 	# passphrase otherwise, which defeats the purpose of it all. The
 	# passphrase used is based on the MAC address of the users ethernet
-	# setup if it exists, the machine board name (not unique, but a somewhat limited set), 
+	# setup if it exists, the machine board name (not unique, but a somewhat limited set),
 	# and now also the root partition UUID, if it exists.
 
-	# The intent of the original design is not changed, i.e. this only protects remote/offline copies of the prefs file, 
+	# The intent of the original design is not changed, i.e. this only protects remote/offline copies of the prefs file,
    # but does not protect against compromised access to the machine checkgmail is running on.
-	# Instead of building/maintaining within checkgmail a passphrase unlocking mechanism, with length/pattern/strength constraints, 
+	# Instead of building/maintaining within checkgmail a passphrase unlocking mechanism, with length/pattern/strength constraints,
 	# it would make more sense to write integrations with other pwd mgt tools, as required, if KWallet is not used.
 
 	# ifconfig output has changed, and kernel updates are frequent...
@@ -199,23 +195,23 @@ BEGIN {
 # Check packages
 #
 
-BEGIN {	
+BEGIN {
 	# A modular package checking routine ...
 	my $failed_packages;
 	my $please_download_error_message = "Please download and install from CPAN (http://search.cpan.org) or from your distribution";
-		
+
 	my $eval_sub = sub {
 		print "$_\n" if $debug;
 		eval $_;
 		if ($@) {
 			return unless m/(use|require)\s*([\w:-]+).*?\;/;
 			my $package = $2;
-			
-			$failed_packages .= " $package ";					
+
+			$failed_packages .= " $package ";
 			print "Warning: $package not found ...\n";
 		}
-	};	
-	
+	};
+
 	# required packages
 	foreach (split("\n","
 	use Gtk2(\"init\");
@@ -247,13 +243,13 @@ EOF
 			my $text = <<EOF;
 <b>CheckGmail v$version</b>
 Copyright &#169; 2005-6, Owen Marshall
-			
+
 Sorry!  CheckGmail can't find the following package(s) on your system.  These packages are needed for CheckGmail to run.
 
-<b>$failed_packages</b> 
+<b>$failed_packages</b>
 
 $explanation
-					
+
 <small>If that fails, you might have to download and install the packages from CPAN (http://search.cpan.org)</small>
 EOF
 			chomp($text);
@@ -271,7 +267,7 @@ EOF
 		print "\nCheckGmail requires the above packages to run\n$please_download_error_message and try again ...\n\n";
 		exit 1;
 	}
-	
+
 	# Name of the 3rd party CLI binary used to access kwallet. This needs to be installed separately for the kwallet integration to be enabled.
 	$kwalletcli="kwalletcli";
 	# Use kwallet if available. Expand detection as appropriate if other password management systems are integrated.
@@ -301,15 +297,6 @@ EOF
 			$nocrypt = 1;
 		}
 	}
-	
-	# optional packages for urls in labels
-	foreach (split("\n","
-	use Gtk2::Sexy;
-	")) {&$eval_sub($_)};
-	if (($failed_packages) && ($failed_packages =~ m/Sexy/i)) {
-		print "\nCheckGmail uses Gtk2::Sexy for clickable URLs in mail messages\nn$please_download_error_message if you want to use this feature ...\n\n";
-		$libsexy = 0;
-	} else { $libsexy = 1 unless $notsexy; }
 }
 
 # There's something wrong with Debian's Crypt::Simple, and it's causing problems ...
@@ -361,7 +348,7 @@ if ($update) {
 		unlink("checkgmail");
 		print "Continuing with application startup ...\n\n";
 	}
-}	
+}
 
 
 sub ask {
@@ -372,8 +359,8 @@ sub ask {
 	chomp($ans);
 	return $ans;
 }
-			
-			
+
+
 ##########################################
 # Threads for non-blocking HTTP-requests
 #
@@ -441,10 +428,10 @@ for (0..255) {
 # If a profile is specified, the folder name will be suffixed with "$profile" (already with a leading '-').
 my $kwallet_folder = "checkgmail" . $profile;
 # This will be either the general password, or the application-specific password (for the atom feed) if two-factor (a.k.a. two-step) authentication is used.
-my $kwallet_default_password_key = "gmailOrAppPassword";	
+my $kwallet_default_password_key = "gmailOrAppPassword";
 # This will be the main google account password, needed if 2-factor authentication is used.
 # See comments in http_check for more details about these passwords.
-my $kwallet_main_google_password_key = "mainGooglePassword";	
+my $kwallet_main_google_password_key = "mainGooglePassword";
 # trust cookie kwallet key
 my $kwallet_two_factor_trust_cookie_key = "twoFactorTrustCookie";
 
@@ -714,7 +701,7 @@ $eventbox->signal_connect('leave_notify_event', sub {
 	if (@popup_status) {
 		# This allows us to mouse into the popup by continuing to display it after
 		# the mouse leaves the tray icon.  We only call it when there are messages
-		# displayed - no one (I'm assuming! :) wants to be able to mouse into the 
+		# displayed - no one (I'm assuming! :) wants to be able to mouse into the
 		# "No new mail" tooltip ... (well, OK, I actually did play around doing exactly
 		# that when I wrote the routine, but that doesn't count ... :)
 		my $persistence = Glib::Timeout->add($popup_persistence, sub {
@@ -726,7 +713,7 @@ $eventbox->signal_connect('leave_notify_event', sub {
 	} else {
 		$win_notify->hide if $win_notify;
 	}
-	
+
 	Glib::Source->remove($popup_delay_timeout) if $popup_delay_timeout;
 	$notify_vis=0;
 });
@@ -775,7 +762,7 @@ $eventbox->signal_connect('button_press_event', \&handle_button_press);
 reinit_checks();
 my $real_check = Glib::Timeout->add(1000, \&check); # no wait-variables, so we're polling once a second.  No real CPU hit here ...
 
-# do initial check 
+# do initial check
 queue_check();
 
 Gtk2->main;
@@ -789,18 +776,18 @@ exit_prog();
 sub exit_prog {
 	# After quitting the GUI we need to logout (if using the cookie_login method) and then clean up the threads ...
 	print "Exiting program ...\n" unless $silent;
-	
+
 	# if ($cookies) {
 		# $http_status->enqueue("Logging out ...");
 		# $request->enqueue("LOGOUT:mail.google.com/mail/u/0/?logout");
 		# sleep 1;
 	# }
-	
+
 	$child_exit = 1;
 	queue_check();
-	
+
 	$http_check->join();
-	
+
 	exit 0;
 }
 
@@ -808,9 +795,9 @@ sub exit_prog {
 
 ##############################
 # Subroutines start here ...
-# 
+#
 
-# Convenience rountine to set the global vars attached to a particular password. It is expecting references for : 
+# Convenience rountine to set the global vars attached to a particular password. It is expecting references for :
 #	- $save_auth_token_flag_ref 			: the reference to the variable indicating whether or not that particular password is saved
 #  - $auth_token_variable_name			: the token variable name, to update the preferences if needed
 #  - $auth_token_value_ref     			: the reference to the password variable
@@ -836,7 +823,7 @@ sub handle_auth_token {
 		$auth_token_value = $auth_token_decrypted_value;	# same if using kwallet, i.e. not native encryption
 		chomp $auth_token_value;
 	}
-	
+
 	# attempt to decrypt the token, if it was stored in the prefs...
 	if (!$use_kwallet && (defined $auth_token_value)) {
 		# changing the token causes Crypt::Simple to die horribly -
@@ -848,7 +835,7 @@ sub handle_auth_token {
 			print "decryption mismatch for '$auth_token_variable_name', changed encryption passphrase ? reprompting for this token...\n";
 		}
 	}
-	
+
 	if (!$save_auth_token_flag || (!defined $auth_token_value) || $auth_token_value eq "" || $decryption_mismatch) {
 			$dialog_function->($translation_key);
 			# Dialog_function may have directly acted on the referenced values, reset the local dereferenced values for the next check.
@@ -862,15 +849,15 @@ sub handle_auth_token {
 
 	chomp($auth_token_decrypted_value) if $auth_token_decrypted_value;
 	# remove $auth_token_variable_name from the pref_variables hash if the user requests it and call $dialog_function to prompt for it.
-	handle_auth_token_preference($save_auth_token_flag, $auth_token_variable_name, $auth_token_value);		
+	handle_auth_token_preference($save_auth_token_flag, $auth_token_variable_name, $auth_token_value);
 
 	return ($save_auth_token_flag, $auth_token_value, $auth_token_decrypted_value);
 
 }
 
-# for a given auth token item, add it to the prefs hash, or delete it from the prefs hash, depending on whether or not this auth token needs to be saved, 
+# for a given auth token item, add it to the prefs hash, or delete it from the prefs hash, depending on whether or not this auth token needs to be saved,
 # and whether or not kwallet integration is used.
-# 
+#
 # $save_auth_token_password_flag : does the auth token need to be saved (e.g. $save_passwd)
 # $prefs_item_name    : preference hash item name
 # $prefs_item_value   :  preference hash item value
@@ -904,11 +891,11 @@ sub store_auth_token_in_kwallet {
 
 }
 
-# get an auth token for a given key from the default kwallet,  $kwallet_folder folder. 
+# get an auth token for a given key from the default kwallet,  $kwallet_folder folder.
 sub get_auth_token_from_kwallet {
 
 	my ($auth_token_key_to_get) = @_;
-	
+
 	my $returned_auth_token = `$kwalletcli -f $kwallet_folder -e $auth_token_key_to_get`;
 	chomp $returned_auth_token;
 
@@ -934,11 +921,11 @@ sub queue_check {
 sub http_check {
 	# Threaded process for sending HTTP requests ...
 	print "Child: Checking thread now starting ... waiting for semaphore to continue\n" if $debug;
-	
+
 	# Variable initialisation isn't over until the fat lady sings ...
 	$fat_lady->down;
 	print "Initialisation complete\n" unless $silent;
-		
+
 	# set debugging proxy env (if needed, uncomment the sourcing of the debugging proxy env below as well)
 	#$ENV{HTTPS_PROXY} = 'http://127.0.0.1:8888';
 	#$ENV{HTTP_PROXY} = 'http://127.0.0.1:8888';
@@ -956,23 +943,23 @@ sub http_check {
 
 	$ua->requests_redirectable (['GET', 'HEAD', 'POST']);
 	# push @{ $ua->requests_redirectable }, 'POST';
-	
+
 	# set time-out - defaults to 90 seconds or $delay, whichever is shorter
-	$ua->timeout($delay/1000<90 ? $delay/1000 : 90);	
-		
+	$ua->timeout($delay/1000<90 ? $delay/1000 : 90);
+
 	# Get the cookie if requested
-	if ($cookies) {		
+	if ($cookies) {
 		use HTTP::Cookies;
 		$cookie_jar = HTTP::Cookies->new();
-		
+
 		$ua->cookie_jar($cookie_jar);
-		
+
 		# Here we submit the login form to Google and the authorisation cookie gets saved
-		
+
 		# This is only useful when Google's pulling an Error 503 party - it's less efficient
 		# as there's a whole lot of unnecessary data associated with the process that slows
 		# it all down ...
-		
+
 		{
 			# this loop is necessary as an incorrect login with Gmail's web form doesn't return a 401
 			# So we simply check for the Gmail_AT cookie as confirmation of a successful login
@@ -988,19 +975,19 @@ sub http_check {
 			} else {
 				$URI_passwd = URI_escape($passwd_decrypt);
 			}
-			
-			# clumsy error detection code uses this variable to differentiate between unable to 
+
+			# clumsy error detection code uses this variable to differentiate between unable to
 			# connect and unable to login - the Gmail login provides no unauthorised code if unsuccessful
 			my $error;
-						
-			# Thanks to that wonderful Firefox extension LiveHTTPHeaders for 
+
+			# Thanks to that wonderful Firefox extension LiveHTTPHeaders for
 			# deciphering the login form! :)
-			
+
 			# now using the same call for both hosted and non-hosted accounts. the small differences between the two will be handled there.
 			$error = http_get("Email=$URI_user&Passwd=$URI_passwd", "LOGIN");
 
 			$cookie_jar->scan(\&scan_at);
-			
+
 			unless ($gmail_at) {
 				unless ($error) {
 					# in reality a code-thrown 401 error...
@@ -1010,7 +997,7 @@ sub http_check {
 					# simple block to prevent checkgmail hogging CPU if not connected!
 					sleep 30;
 				}
-				
+
 				redo;
 			}
 		}
@@ -1020,14 +1007,14 @@ sub http_check {
 		# persist smsv cookie if required
 		#################################
 		$two_factor_trust_cookie_decrypt = $gmail_smsv;
-		
+
 		# If kwallet integration is available, and password storage is requested, store it in KWallet. Otherwise encrypt it locally and save it in the preferences.
 		if ($save_two_factor_trust_cookie) {
 			if ((defined $two_factor_trust_cookie_decrypt) && $two_factor_trust_cookie_decrypt ne "") {
 				if ($use_kwallet) {
 					store_auth_token_in_kwallet($kwallet_two_factor_trust_cookie_key, $two_factor_trust_cookie_decrypt);
 				} else {
-					$two_factor_trust_cookie = encrypt_real($two_factor_trust_cookie_decrypt);	
+					$two_factor_trust_cookie = encrypt_real($two_factor_trust_cookie_decrypt);
 				}
 			}
 
@@ -1036,8 +1023,8 @@ sub http_check {
 			if ($save_two_factor_trust_cookie) {
 				write_prefs();
 			}
-		}	
-	}		
+		}
+	}
 
 	print "http_check : Entering while loop...\n" unless $silent;
 
@@ -1046,7 +1033,7 @@ sub http_check {
 		# (can't send anonymous arrays down a queue, unfortunately!)
 		# Now also used for labels ...
 		my ($method, $address_real, $label) = ($address =~ /(.*?):([^\s]*)\s*(.*)/);
-		
+
 		my $logon_string = "";
 		# The following credentials are used for the atom feed login :
 		#    - If two-factor authentication is used, the password used here must be the application-specific password.
@@ -1061,7 +1048,7 @@ sub http_check {
 		} else {
 				print "http_check : cookies are used, and two factor is not used, therefore logon_string not required for the atom feed...\n" unless $silent;
 		}
-		
+
 		$request_results->enqueue(http_get("https://$logon_string$address_real", $method, $label));
 
 	}
@@ -1070,30 +1057,30 @@ sub http_check {
 
 sub scan_at {
 	my $cookie_ref = \@_;
-		
+
 	unless ($silent) {
 		#use Data::Dumper;
 		#print Dumper(\@_);
 		print "scan_at : Saved cookie: ",$cookie_ref->[1],"\n",$cookie_ref->[2],"\n\n";
 	}
-	
+
 	# This sub is invoked for each cookie in the cookie jar.
 	# What we're looking for here is the Gmail authorisation key, GMAIL_AT
 	# - this is needed to interface with the Gmail server for actions on mail messages ...
 	# or the HID cookie which is set with Gmail hosted domains
-	
+
 	if ($cookie_ref->[1] =~ m/GMAIL_AT/) {
 		$gmail_at = $cookie_ref->[2];
 	}
-	
+
 	if ($cookie_ref->[1] =~ m/HID/) {
 		$gmail_hid = $cookie_ref->[2];
 	}
-	
+
 	if ($cookie_ref->[1] =~ m/GAUSR/) {
 		$gmail_gausr = $cookie_ref->[2];
 	}
-	
+
 	if ($cookie_ref->[1] =~ m/SID/) {
 		$gmail_sid = $cookie_ref->[2];
 	}
@@ -1112,43 +1099,43 @@ sub http_get {
 	$label = "/$label" if $label;
 	$label||="";
 	my $error;
-	
+
 	if ($method eq 'POST') {
 		# quick hack to use the POST method for Gmail actions ...
 		my ($add1, $add2) = ($address =~ m/(.*)\|(.*)/);
 		# print "($add1, $add2)\n" unless $silent;
-		
+
 		my $req = HTTP::Request->new($method => $add1);
   		$req->content_type('application/x-www-form-urlencoded');
   		$req->content($add2);
-		
+
 		$ua->request($req);
 		return;
-		
+
 	} elsif ($method eq 'POST_MB') {
 		# quick hack to grab the message text ...
 		my ($add1, $add2) = ($address =~ m/(.*)\|(.*)/);
 		# print "($add1, $add2)\n" unless $silent;
-		
+
 		my $req = HTTP::Request->new('POST' => $add1);
   		$req->content_type('application/x-www-form-urlencoded');
   		$req->content($add2);
-		
+
 		my $response = $ua->request($req);
-		
+
 		my $http = $response->content;
 		$label =~ s/\///g;
 		return "LABEL=$label\n$http";
-		
+
 	} elsif ($method eq 'LOGIN') {
 		# New LOGIN method written by Gerben van der Lubbe on Oct 6, 2009.
 		# (based in turn on vially's (https://sourceforge.net/users/vially/) PHP code.
-		
+
 		# Well, we did get a URL here, but it doesn't make any sense to send both LOGIN and the URL to this function.
 		# So, this URL is just the username and password addition.
 
 		print "http_get : entering LOGIN...\n" unless $silent;
-		
+
 		# start address
       ###############
 
@@ -1162,7 +1149,7 @@ sub http_get {
 
 		my $start_req = HTTP::Request->new('GET' => $start_address);
 
-		
+
 		my $start_response = $ua->request($start_req);
 			if ($start_response->is_error) {
 				(my $code, $error) = format_error_message($start_response);
@@ -1204,7 +1191,7 @@ sub http_get {
 
 		$post_data = "ltmpl=default&ltmplcache=2&continue=$continue_address?ui=html&service=mail&rm=false&scc=1&GALX=$post_galx&$address&PersistentCookie=yes&rmShown=1&signIn=Sign+in&asts=";
 		# be aware that $address is badly named, as it may actually be the username/password couple...
-		
+
 		# Hide personal data from verbose display
 		my $post_display = $post_data;
 		$post_display =~ s/Email=(.*?)&/Email=******&/;
@@ -1279,10 +1266,10 @@ sub http_get {
 				my ($csrf_secTok)   = ($initial_login_post_response_content =~ m/id="secTok"\s+value='(.*?)'/ismg);
 
 				# Could in theory ask for the pin code here, but testing showed that receiving texts in this context was unreliable, and would sometimes hit captchas / bot-prevention
-				# mechanisms. It is therefore recommended to use the google authenticator app on a smartphone to get a code without relying on receiving a text. 
+				# mechanisms. It is therefore recommended to use the google authenticator app on a smartphone to get a code without relying on receiving a text.
 				# Waiting for the text message to enter the code in the dialog is not either the best user experience...
-				#get_verification_code(); 
-			
+				#get_verification_code();
+
 				my $sleep_delay = 2; # a small sleep is sometimes required before making this next POST (pin code), and after returning from the previous get...
 				print "sleeping $sleep_delay sec(s) before calling two_factor_check...\n" unless $silent;
 				sleep $sleep_delay;
@@ -1329,8 +1316,8 @@ sub http_get {
 			}
 		my $target_response_content = $target_response->content;
 
-		# The globals.  Lots of goodies here, which we don't need right now 
-		# but which might come in handy later ... 
+		# The globals.  Lots of goodies here, which we don't need right now
+		# but which might come in handy later ...
 		if ($target_response_content =~ m/var GLOBALS=\[,.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,"(.*?)"/) {
 			$gmail_ik = $1;
 			print "Found gmail_ik:'$gmail_ik'\n\n" unless $silent;
@@ -1340,39 +1327,39 @@ sub http_get {
 
 		# return the error if there was one, otherwise return null
 		return $error;
-		
+
 	} elsif ($method eq 'LOGOUT') {
 		# a  hack to streamline the logout process
 		print "Logging out of Gmail ...\n" unless $silent;
-		
+
 		my $req = HTTP::Request->new('GET' => "$address");
 		my $response = $ua->request($req);
-		
+
 		return;
 	} elsif ($method eq 'IMAGE') {
 		# a hack to grab attachment images
 		my $image_name = $label;
-		
+
 		my $req = HTTP::Request->new(GET => "$address");
 		my $response = $ua->request($req);
 		if ($response->is_error) {
 			print "error retrieving!\n";
 			return 0;
 		}
-		
+
 		my $http = $response->content;
-		
+
 		open (DATA, ">$icons_dir$image_name") || print "Error: Could not open file for writing: $!\n";
 		print DATA $http;
 		close DATA;
-		
+
 		# we need a semaphore here so the GUI doesn't redraw until the image is obtained
 		$error_block->up;
-		
+
 		return 0;
 	}
 
-	
+
 	$http_status->enqueue($trans{notify_check});
 
 	my $req = HTTP::Request->new($method => "$address$label");
@@ -1381,7 +1368,7 @@ sub http_get {
 	if ($response->is_error) {
 		(my $code, $error) = format_error_message($response);
 		$http_status->enqueue($error);
-		
+
 		# Incorrect username/password??
 		if ($code == 401) {
 			# Set a semaphore block to prevent multiple incorrect logins
@@ -1389,14 +1376,14 @@ sub http_get {
 			# ... still, doesn't hurt to be careful ... :)
 			$error_block->down;
 		}
-		
+
 		return 0;
 	}
-	
+
 	my $http = $response->content;
-	
+
 	$label =~ s/\///g;
-		
+
 	return "LABEL=$label\n$http";
 }
 
@@ -1461,7 +1448,7 @@ sub check {
 		if ($status =~ m/error/i) {
 			# General error notification
 			$image->set_from_pixbuf($error_pixbuf);
-			
+
 			if ($status =~ m/401/) {
 				# Here there is a choice to make : either not reprompt for currently stored tokens (assuming a mistyped password, if it isn't stored),
 				# or reprompt for all of them in case a password or token has changed. Choosing/keeping the latter, for now.
@@ -1478,46 +1465,46 @@ sub check {
 					get_verification_code();   # prompt for the PIN code
 				}
 				Gtk2->main_iteration while (Gtk2->events_pending);
-				
+
 				# queue a new request to check mail
 				queue_check();
-				
+
 				# and release the semaphore block ...
 				$error_block->up;
 			}
 
 		}
 	}
-		
+
 	# Return if there aren't any Atom feeds in the queue ...
 	return 1 unless my $atom = $request_results->dequeue_nb;
-	
+
 	#if ($atom =~ m/while\(1\);/) { # datapack has changd, adjust the regexp as this no longer works...
 	if ($atom =~ m/^\)]}'/m) {
 
 		# datapack shortcircuit
 		# we use this to grab the full text of messages ...
-		
+
 		# uncomment below to see the datapack structure
 		#print "atom:\n$atom\n\n" unless $silent;
-		
+
 		# as of 2/11/10, we can no longer use the old ui=1 datapack
 		# Unfortunately, the new ui=2 datapack is quite a bit less pleasant
 		# to use, with no nice "mb" cues ...
-		
-		my ($mb, $ma); 
-		
+
+		my ($mb, $ma);
+
 		# if ($atom =~ m/\["ms",.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,\[.*?"\].*?\[.*?\[.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/s) {#.*?,.*?,.*?,\[,.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/g);
 			# print "\n\n-----\nYYYYY!\n$1\n";
 		# } else {
 			# print "\n\n-----\nNOPE!\n\n";
 		# }
-		
+
 		# See what you've made me do, Google??  Just look at this fugly regex ...
 		while ($atom =~ m/\["ms",.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,\[.*?"\].*?\[.*?\[.*?,.*?,.*?,.*?,.*?,"(.*?)",\[/sg) {
 			$mb .= "$1";
 		}
-				
+
 		# ma is the attachment, if any
 		# (I suspect this doesn't work anymore with the new datapack ...)
 		while ($atom =~ m/\["ma",\[(.*?)\]/g) {
@@ -1528,7 +1515,7 @@ sub check {
 				$ma = $1;
 			}
 		}
-		
+
 		# Note that apparently the message text is currently not available in the datapack for hosted domains...
 		$mb = "" if (!$mb);
 		$mb = clean_text_body($mb);
@@ -1540,29 +1527,29 @@ sub check {
 			$messages_ext{$cs}->{shown} = 1;
 			$messages_ext{$cs}->{attachment} = $ma;
 		}
-		
-		
+
+
 		notify();
 		return 1;
 	}
-	
+
 	# Process the Atom feed ...
 	my ($label, $atom_txt) = ($atom =~ m/LABEL=(.*?)\n(.*)/s);
 	# $label ||= "";
 	my $gmail = XMLin($atom_txt, ForceArray => 1);
-	
+
 	# # Uncomment below to view xml->array structure
 	# use Data::Dumper;
 	# print Dumper($gmail);
-	
+
 	# Count messages ...
 	$new{$label} = 0;
 	if ($gmail->{entry}) {
 		$new{$label} = @{$gmail->{entry}};
 	}
-	
+
 	my $new_mail =0;
-	
+
 	# remove old messages with the same label ...
 	my @new_messages;
 	foreach my $i (0 .. @messages) {
@@ -1571,61 +1558,61 @@ sub check {
 			delete $issued_h{$messages[$i]->{time}};
 		} else {
 			push (@new_messages, $messages[$i]);
-		} 
+		}
 	}
 	@messages = @new_messages;
-	
+
 	# print "\n--------\nmessages: @messages\n";
-	
-			
+
+
 	if ($new{$label}) {
 		# New messages - get the details ...
 		my (@tip_text, $popup_text, $popup_authors, @issued_l);
 		$image->set_from_pixbuf($mail_pixbuf);
-					
+
 		CHECK: for my $i (0 .. $new{$label}-1) {
-			
+
 			my $author_name = $gmail->{entry}->[$i]->{author}->[0]->{name}->[0];
 			my $author_mail = $gmail->{entry}->[$i]->{author}->[0]->{email}->[0];
 			my $issued = $gmail->{entry}->[$i]->{issued}->[0];
 			my $title = $gmail->{entry}->[$i]->{title}->[0];
 			my $summary = $gmail->{entry}->[$i]->{summary}->[0];
 			my $href = $gmail->{entry}->[$i]->{link}->[0]->{href};
-			
+
 			my ($id) = ($href =~ m/message_id=(.*?)&/);
-						
+
 			# No subject, summary or author name?
 			ref($title) && ($title = $trans{notify_no_subject});
 			ref($summary) && ($summary = $trans{notify_no_text});
 			my $author = $author_name || $author_mail;
-						
+
 			# clean text for Pango compatible display ...
 			$title = clean_text_and_decode($title);
 			$author = clean_text_and_decode($author);
 			$summary = clean_text_and_decode($summary);
-			
+
 			my ($year, $month, $day, $hour, $min, $sec) = ($issued =~ m/(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)Z/);
 			my $time_abs = $sec+$min*60+$hour*3600+$day*86400+$month*2678400+$year*32140800;
-			
+
 			# check for duplicate labels
 			foreach (@messages) {
 				next CHECK if $_->{id} eq $id;
 			}
-			
+
 			unless ($private) {
 				push @messages, { href=>$href, id=>$id, time=>$time_abs, issued=>$issued, title=>$title, author=>$author, body=>$summary, label=>$label };
 			}
-						
+
 			# Save authors and time stamps for popup text below ...
 			$issued_h{$time_abs}=$author;
 		}
-		
-		# create the mail details window ...				
+
+		# create the mail details window ...
 		notify('', $new{$label}-1);
-		
+
 		# Now check if a popup needs to be displayed:
-		
-		# find previously unread entries and remove		
+
+		# find previously unread entries and remove
 		if (@popup_status) {
 			for my $i (0 .. $#popup_status) {
 				next unless $popup_status[$i];
@@ -1633,35 +1620,35 @@ sub check {
 				$issued_h{$popup_status[$i]->{time}} && delete $issued_h{$popup_status[$i]->{time}};
 			}
 		}
-		
+
 		# build unread authors from what's left
 		foreach (keys(%issued_h)) {
 			# eliminate duplicate authors
 			next if $popup_authors && ($popup_authors =~ m/\Q$issued_h{$_}\E/);
 			$popup_authors .= ($popup_authors ? ", $issued_h{$_}" : "$issued_h{$_}");
 		}
-		
+
 		# Create popup text
 		if ($popup_authors) {
 			$popup_authors =~ s/, ([\w\s-]+)$/ $trans{notify_and} $1/; # replace final comma with "and"
 			$popup_authors = clean_text_and_decode($popup_authors);
 			$popup_text = "<span foreground=\"#000000\"><small>$trans{notify_new_mail}$popup_authors ...</small></span>";
 		}
-		
+
 		# Save current unread list
 		@popup_status = @messages;
-				
+
 		# Finally, display popup if there's any new mail
 		# and run any command that the user has specified in the prefs
 		if ($popup_text) {
 			popup($popup_text);
 			run_command($notify_command) if $notify_command;
 		}
-				
-	} elsif (!$new_mail) {		
+
+	} elsif (!$new_mail) {
 		notify();
 	}
-	
+
 	# Need to return true to keep the timeout going ...
 	return 1;
 }
@@ -1670,7 +1657,7 @@ sub check {
 sub clean_text_and_decode {
 	($_) = @_;
 
-	if(!defined $_ || $_ eq "") { 
+	if(!defined $_ || $_ eq "") {
 		return $_;
 	}
 
@@ -1690,18 +1677,18 @@ sub clean_text_and_decode {
 	# eval { decode("utf8", $_, Encode::FB_CROAK); };
 	# my $body_decode = $@ ? $_ : decode("utf8", $_);
 	#my $body_decode= decode("utf-8", $_);
-	
+
 	# I have no idea why this works ...
 	my $body_encode = encode("utf8", $_);
 	my $body_decode = decode("utf8", $body_encode);
-	
+
 	return $body_decode;
 }
 
 sub clean_text {
 	($_) = @_;
 
-	if(!defined $_ || $_ eq "") { 
+	if(!defined $_ || $_ eq "") {
 		return $_;
 	}
 
@@ -1724,7 +1711,7 @@ sub clean_text {
 sub clean_text_body {
 	($_) = @_;
 
-	if(!defined $_ || $_ eq "") { 
+	if(!defined $_ || $_ eq "") {
 		return $_;
 	}
 
@@ -1736,7 +1723,7 @@ sub clean_text_body {
 	s/\>/>/g;
 	s/\\u([\d\w]{4})/"&#".hex($1).";";/gex;
 	s/&\#(\d+)\;/chr($1)/gex;
-			
+
 	s/\\t/\t/g;
 	# s/\s\\n//g;
 	# s/\\n\s//g;
@@ -1749,7 +1736,6 @@ sub clean_text_body {
 	s/<p\s*\/*\\*>/\n\n/g;
 	s/<\/div\\*>/\n/g; # GMail now uses div blocks for paragraphs!  Who'd have thought they could be so abhorrent?
 	# s/(?:\n\s*){3,}/\n\n/sg;
-	s/<.*?>//g unless $libsexy;
 	s/<a.*?(href=".*?").*?>(.*?)<\/a>/<-a $1>$2<-\/a>/ig;
 	s/<[^-].*?>//g;
 	# s/<([\/]|[^a])[^a].*?>//g;
@@ -1765,7 +1751,7 @@ sub clean_text_body {
 	# eval { decode("utf8", $_, Encode::FB_CROAK); };
 	# my $body_decode = $@ ? $_ : decode("utf8", $_);
 	# my $body_encode = encode("utf8", $_);
-	
+
 	# I have no idea why this works either ...
 	my $body_decode = decode("utf8", $_);
 
@@ -1786,18 +1772,18 @@ sub open_gmail {
 
 sub run_command {
 	my ($command, $address) = @_;
-	
+
 	# We now allow the use of '%u' to delineate the web address
 	if ($address) {
 		$command =~ s/\%u/"$address"/g;
 	}
-	
+
 	# allows the number of new messages to be used in scripts! :)
 	if ($command =~ m/\%m/) {
 		my $messages = @messages;
 		$command =~ s/\%m/$messages/g;
 	}
-	
+
 	print "run command: $command\n" unless $silent;
 	system("$command &");
 }
@@ -1816,7 +1802,7 @@ sub read_prefs {
 		# old, deprecated simple text tile method ...
 		return unless -e $prefs_file_nonxml;
 		open(PREFS, "<$prefs_file_nonxml") || die "Cannot open $prefs_file_nonxml for reading: $!\n";
-		
+
 		# lock shared variables
 		lock($user);
 		lock($passwd);
@@ -1827,7 +1813,7 @@ sub read_prefs {
 		lock($save_two_factor_trust_cookie);
 		lock($gmail_address);
 		lock($use_two_factor_auth_pref);
-		
+
 		while (<PREFS>) {
 			s/[\n\r]//g;
 			next if /^$/;
@@ -1842,7 +1828,7 @@ sub read_prefs {
 		open(PREFS, "<$prefs_file") || die("Could not open $prefs_file for reading: $!\n");
 		my $prefs = join("",<PREFS>);
 		close PREFS;
-		
+
 		# lock shared variables
 		lock($user);
 		lock($passwd);
@@ -1853,25 +1839,25 @@ sub read_prefs {
 		lock($save_two_factor_trust_cookie);
 		lock($gmail_address);
 		lock($use_two_factor_auth_pref);
-		
+
 		my $prefs_xml = XMLin($prefs, ForceArray => 1);
 
 		## For debugging ...
 		# use Data::Dumper;
 		# print Dumper $prefs_xml;
-		
+
 		foreach my $i (keys %pref_variables) {
 			my $pointer = $pref_variables{$i};
 			for (ref($pointer)) {
 				/SCALAR/ && do {
 					$$pointer = $prefs_xml->{$i} if defined($prefs_xml->{$i});
 					last };
-				
+
 				/HASH/ && do {
 					# last unless ref($prefs_xml->{$i}) eq "HASH";
 					%$pointer = %{ $prefs_xml->{$i}->[0]} if defined($prefs_xml->{$i}->[0]);
 					last };
-					
+
 				/ARRAY/ && do {
 					# last unless ref($prefs_xml->{$i}) eq "HASH";
 					@$pointer = @{ $prefs_xml->{$i}->[0]} if defined($prefs_xml->{$i}->[0]);
@@ -1879,17 +1865,17 @@ sub read_prefs {
 			}
 		}
 	}
-	
+
 	convert_labels_from_hash();
 	set_icons();
 	set_language();
-	
+
 	return 1;
 }
 
 sub write_prefs {
 	# new XML-based preferences routine ...
-	
+
 	# lock shared variables
 	lock($user);
 	lock($passwd);
@@ -1900,9 +1886,9 @@ sub write_prefs {
 	lock($save_two_factor_trust_cookie);
 	lock($gmail_address);
 	lock($use_two_factor_auth_pref);
-	
+
 	convert_labels_from_array();
-		
+
 	my %xml_out;
 	foreach my $i (keys %pref_variables) {
 		my $pointer = $pref_variables{$i};
@@ -1910,14 +1896,14 @@ sub write_prefs {
 				/SCALAR/ && do {
 					$xml_out{$i} = $$pointer if defined($$pointer);
 					last };
-				
+
 				/HASH/ && do {
 					$xml_out{$i} = {%$pointer}; # if defined(%$pointer);
 					last };
 			}
 
 	}
-	
+
 	my $prefs = XMLout(\%xml_out, AttrIndent=>1);
 	open(PREFS, ">$prefs_file") || die("Could not open $prefs_file file for writing: $!");
 	binmode PREFS, ":utf8";
@@ -1931,7 +1917,7 @@ sub write_prefs {
 #
 # It's very cumbersome though - I'm not all that happy with this solution!!!
 sub convert_labels_from_hash {
-	@labels=();	
+	@labels=();
 	push @labels, {label => "$_", delay => $label_delay{$_}} foreach sort(keys(%label_delay));
 }
 
@@ -1948,9 +1934,9 @@ sub convert_labels_from_array {
 sub notify {
 	# popup notify code to replace tooltips
 	# Why?  Because tooltips can't do nice pango markup! :-)
-	my ($status, $text) = @_;	
+	my ($status, $text) = @_;
 	my $new_mail = @messages;
-	
+
 	# display number of messages
 	if ($mailno) {
 		# print "setting \"$new_mail\"\n";
@@ -1958,10 +1944,10 @@ sub notify {
 		$new_mail ? $number_label->show : $number_label->hide;
 		# $new_mail ? $number_label->set_markup("$new_mail") : $number_label->set_markup(" ")
 	}
-	
+
 	my @sorted_messages = sort {$b->{time} <=> $a->{time}} @messages;
 	@messages = @sorted_messages;
-	
+
 	unless ($status) {
 		if ($new_mail > 1) {
 			$status = "<small><span foreground=\"#000000\">$trans{notify_multiple1}$new_mail$trans{notify_multiple2}</span></small>";
@@ -1970,29 +1956,29 @@ sub notify {
 		} else {
 			# No new messages
 			$image->set_from_pixbuf($no_mail_pixbuf);
-			
+
 			my $time = $time_24 ? `date +\"%k:%M\"` : `date +\"%l:%M %P\"`;
 			chomp($time);
 			$time =~ s/^\s+//g;
 			$status = "<span foreground=\"#000000\">$trans{notify_no_mail} <small>($time)</small></span>";
-			
+
 			@popup_status = ();
-			
+
 			run_command($nomail_command) if $nomail_command;
 		}
 	}
 
-	
+
 	# strip markup for command line ...
 	unless ($silent) {
 		$_ = $status;
 		s/\<.*?\>//g;
 		print "$_\n";
 	}
-	
+
 	# Check if popup is currently displayed ...
 	my $redisplay = 1 if (($win_notify) && ($win_notify->visible));
-	
+
 	# *sigh* ... bloody gtk won't let me do this:
 	# if (($win_notify) && ($win_notify->visible)) {
 		# print "getting vadj\n";
@@ -2000,63 +1986,63 @@ sub notify {
 	# } else {
 		# $vadj = 0;
 	# }
-	
+
 	# Don't destroy the popup containing mail messages if we're just doing another check ...
 	if (@messages && $redisplay && ($status =~ /$trans{notify_check}/ || $status =~ /$trans{notify_undoing}/)) {
 		$status_label->set_markup("<span foreground=\"#000000\"><small>$status</small></span>");
 		show_notify();
 		return;
 	}
-	
+
 	# return if (@messages && !defined($text));
-	
+
 	if (!@messages && !$notify_vis && $redisplay) {
 		$redisplay = 0;
 		$win_notify->hide;
 	}
-	
+
 	# Create new popup
 	my $win_notify_temp = Gtk2::Window->new('popup');
-	
+
 	# If we're using enter/leave notification, we need to create borders with eventboxes
 	# - if there's a gap between window and eventbox, moving into the eventbox is considered a leave notification from the window!
 	my $notifybox_b = Gtk2::EventBox->new;
 	$notifybox_b->modify_bg('normal', Gtk2::Gdk::Color->new (0, 0, 0));
-	
+
 	# we use the vbox here simply to give an outer border ...
 	$notify_vbox_b = Gtk2::VBox->new (0, 0);
 	$notify_vbox_b->set_border_width(1);
 	$notifybox_b->add($notify_vbox_b);
-	
+
 	$notifybox = Gtk2::EventBox->new;
 	$notifybox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 	$notify_vbox_b->pack_start($notifybox,0,0,0);
-	
+
 	# we use the vbox here simply to give an internal border ...
 	my $notify_vbox = Gtk2::VBox->new (0, 0);
 	$notify_vbox->set_border_width(4);
 	$notifybox->add($notify_vbox);
-	
+
 	# display mail status
 	my $status_hbox = Gtk2::HBox->new(0,0);
 	$notify_vbox->pack_start($status_hbox,0,0,0);
-	
+
 	$status_label = Gtk2::Label->new;
 	$status_label->set_markup("<span foreground=\"#000000\">$status</span>");
 	$status_hbox->pack_start($status_label,0,0,0);
-	
+
 	# $message_flag = @text ? 1 : 0;
-	
+
 	if (@messages && $cookies) {
 		# mark all as read button and spacer
 		my $mark_all_label = Gtk2::Label->new;
 		$mark_all_label->set_markup(text_norm($trans{mail_mark_all}, "", ""));
-		
+
 		my $mark_all_ebox = Gtk2::EventBox->new();
 		$mark_all_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 		my $ma1 = $mark_all_ebox->signal_connect(enter_notify_event=>sub{$mark_all_label->set_markup(text_u($trans{mail_mark_all}, "", ""));});
 		my $ma2 = $mark_all_ebox->signal_connect(leave_notify_event=>sub{$mark_all_label->set_markup(text_norm($trans{mail_mark_all}, "", ""));});
-		
+
 		$mark_all_ebox->signal_connect(button_press_event=>sub{
 			@undo_buffer=();
 			my @labels_to_check;
@@ -2065,7 +2051,7 @@ sub notify {
 				push @labels_to_check, $_->{label};
 				$request->enqueue(gen_action_url($gmail_act{read},$id));
 				$mark_all_label->set_markup(text_u($trans{mail_marking_all}, "", ""));
-				
+
 				# don't want to try to disconnect the signals multiple times!
 				if ($ma1) {
 					$mark_all_ebox->signal_handler_disconnect($ma1);
@@ -2077,18 +2063,18 @@ sub notify {
 			}
 			queue_check($_) foreach @labels_to_check;
 		});
-		
+
 		$mark_all_ebox->add($mark_all_label);
 		$status_hbox->pack_end($mark_all_ebox,0,0,0);
-		
+
 	}
-	
+
 	if (@messages) {
 		my $spacer = Gtk2::Label->new;
 		$spacer->set_markup("<small> </small>");
 		$notify_vbox->pack_start($spacer,0,0,0);
 	}
-		
+
 	# display messages
 	my $number = @messages;
 	my $count;
@@ -2100,24 +2086,24 @@ sub notify {
 			$mb = $messages_ext{$id}->{text};
 			$body = $messages_ext{$id}->{text} if $messages_ext{$id}->{shown};
 		}
-				
+
 		# --- title and author ---
-				
+
 		my $hbox_t = Gtk2::HBox->new(0,0);
 		$notify_vbox->pack_start($hbox_t,0,0,0);
-		
+
 		my $vbox_t = Gtk2::VBox->new(0,0);
-		$hbox_t->pack_start($vbox_t,0,0,0);	
-		
+		$hbox_t->pack_start($vbox_t,0,0,0);
+
 		my $hbox_tt = Gtk2::HBox->new(0,0);
 		$vbox_t->pack_start($hbox_tt,0,0,0);
-			
-				
-		
+
+
+
 		my $title_l = Gtk2::Label->new;
 		$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>");
 		$title_l->set_line_wrap(1);
-		
+
 		my $title_l_ebox = Gtk2::EventBox->new();
 		$title_l_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u><i>$title</i></u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
@@ -2131,7 +2117,7 @@ sub notify {
 				# print "Message ID = $id\n";
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
 				#$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
-				
+
 				# As of 3/11/10, Gmail has removed access to the old ui=1 version of Gmail
 				# ui=2 requires a POST command to get the datapack (which has also changed formats slightly)
 				$request->enqueue("POST_MB:".gen_prefix_url()."/?ui=2&ik=$gmail_ik&rid=&view=cv&prf=1&_reqid=&nsc=1|&mb=0&rt=j&cat=all&search=cat&th=$id&at=$gmail_at");
@@ -2139,23 +2125,23 @@ sub notify {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
 				$messages_ext{$id}->{shown} = 1-$messages_ext{$id}->{shown};
-			}				
+			}
 			notify();
 		});
-		
-		$title_l_ebox->add($title_l);		
+
+		$title_l_ebox->add($title_l);
 		$hbox_tt->pack_start($title_l_ebox,0,0,0);
-		
+
 		# short spacer
 		my $title_spacer = Gtk2::HBox->new(0,0);
 		$title_spacer->set_border_width(1);
 		$vbox_t->pack_start($title_spacer,0,0,0);
-		
+
 		# my god, gtk2 has the most stupid packing routines imaginable!!!
 		my $hbox_from = Gtk2::HBox->new(0,0);
 		$vbox_t->pack_start($hbox_from,0,0,0);
-		
-		
+
+
 		# --- Starring messages ---
 		# Note: there's no way to check the star-status of a message from the atom feed
 		# of course, we're gradually getting to the stage where it'd be much easier to
@@ -2164,10 +2150,10 @@ sub notify {
 		#
 		# In the meantime, the icon adds a quick way to star messages that you'd like
 		# to come back to later, but ignore for the present.
-		
+
 		# Star icons are taken from Mozilla Firefox 3 (http://getfirefox.com), licensed under
 		# the Creative Commons license
-		
+
 		my $star_i = Gtk2::Image->new();
 		if ($messages_ext{$id}->{star}) {
 			$star_i->set_from_pixbuf($star_pixbuf);
@@ -2175,7 +2161,7 @@ sub notify {
 			$messages_ext{$id}->{star}=0;
 			$star_i->set_from_pixbuf($nostar_pixbuf);
 		}
-		
+
 		my $star_ebox = Gtk2::EventBox->new();
 		$star_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 		$star_ebox->signal_connect(button_press_event=>sub{
@@ -2188,51 +2174,51 @@ sub notify {
 			} else {
 				$star_i->set_from_pixbuf($nostar_pixbuf);
 				$request->enqueue(gen_action_url($gmail_act{unstar},$id));
-			}				
-		});	
-		
-		$star_ebox->add($star_i);		
-		
+			}
+		});
+
+		$star_ebox->add($star_i);
+
 		my $star_space = Gtk2::HBox->new(0,0);
-		$star_space->set_border_width(3);	
-		
+		$star_space->set_border_width(3);
+
 		# From: line (with star)
 		my $from_l = Gtk2::Label->new;
 		$from_l->set_markup("<b>$trans{notify_from}</b> $author");
 		$from_l->set_line_wrap(1);
-		
+
 		$hbox_from->pack_start($from_l,0,0,0);
-		$hbox_from->pack_start($star_space,0,0,0);	
-		$hbox_from->pack_start($star_ebox,0,0,0);	
-		
-		
+		$hbox_from->pack_start($star_space,0,0,0);
+		$hbox_from->pack_start($star_ebox,0,0,0);
+
+
 		# --- Attachment icon ---
 		if ($messages_ext{$id}->{attachment}) {
 			$att = $messages_ext{$id}->{attachment};
-			my ($image_name) = ($att =~ m/.*\/(.*)$/);		
-			
+			my ($image_name) = ($att =~ m/.*\/(.*)$/);
+
 			check_icon($att);
-			
+
 			my $att_image = Gtk2::Image->new_from_pixbuf(set_icon("$icons_dir/$image_name", 16));
 			$hbox_t->pack_end($att_image,0,0,0);
-			
+
 			# my $title_att = Gtk2::Label->new;
 			# $title_att->set_markup("<span foreground=\"#000000\"><small>[$att]</small></span>");
 			# $title_att->set_line_wrap(1);
 			# $hbox_t->pack_end($title_att,0,0,0);
-			
-		}
-			
 
-		
+		}
+
+
+
 		# --- options ---
-		
+
 		my $hbox_opt = Gtk2::HBox->new(0,0);
 		$notify_vbox->pack_start($hbox_opt,0,0,0);
-		
+
 		my $command_label = Gtk2::Label->new;
 		$command_label->set_markup(text_norm($trans{mail_open}, ""));
-		
+
 		my $title_ebox = Gtk2::EventBox->new();
 		$title_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 		$title_ebox->signal_connect(button_press_event=>sub{
@@ -2247,20 +2233,20 @@ sub notify {
 		});
 		$title_ebox->signal_connect(enter_notify_event=>sub{$command_label->set_markup(text_u($trans{mail_open},""));});
 		$title_ebox->signal_connect(leave_notify_event=>sub{$command_label->set_markup(text_norm($trans{mail_open}, ""));});
-		
+
 		$title_ebox->add($command_label);
 		$hbox_opt->pack_start($title_ebox,0,0,0);
-		
-		
+
+
 		if ($cookies) {
 			# We can only do these cute things when we've got a Gmail_at string to work with ...
 			# thus it's limited to the cookie_login method
-			
+
 			# ---- mark as read
-			
+
 			my $mark_label = Gtk2::Label->new;
 			$mark_label->set_markup(text_norm($trans{mail_mark}));
-			
+
 			my $mark_ebox = Gtk2::EventBox->new();
 			$mark_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 			my $s1 = $mark_ebox->signal_connect(enter_notify_event=>sub{$mark_label->set_markup(text_u($trans{mail_mark}));});
@@ -2276,12 +2262,12 @@ sub notify {
 			});
 			$mark_ebox->add($mark_label);
 			$hbox_opt->pack_start($mark_ebox,0,0,0);
-			
+
 			# ---- archive
-			
+
 			my $archive_label = Gtk2::Label->new;
 			$archive_label->set_markup(text_norm($trans{mail_archive}));
-			
+
 			my $archive_ebox = Gtk2::EventBox->new();
 			$archive_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 			my $s1a = $archive_ebox->signal_connect(enter_notify_event=>sub{$archive_label->set_markup(text_u($trans{mail_archive}));});
@@ -2299,12 +2285,12 @@ sub notify {
 			});
 			$archive_ebox->add($archive_label);
 			$hbox_opt->pack_start($archive_ebox,0,0,0);
-			
+
 			# ---- report spam
-			
+
 			my $spam_label = Gtk2::Label->new;
 			$spam_label->set_markup(text_norm($trans{mail_report_spam}));
-			
+
 			my $spam_ebox = Gtk2::EventBox->new();
 			$spam_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 			my $s1s = $spam_ebox->signal_connect(enter_notify_event=>sub{$spam_label->set_markup(text_u($trans{mail_report_spam}));});
@@ -2321,12 +2307,12 @@ sub notify {
 			});
 			$spam_ebox->add($spam_label);
 			$hbox_opt->pack_start($spam_ebox,0,0,0);
-			
+
 			# ---- delete
-			
+
 			my $delete_label = Gtk2::Label->new;
 			$delete_label->set_markup(text_norm($trans{mail_delete}));
-			
+
 			my $delete_ebox = Gtk2::EventBox->new();
 			$delete_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
 			my $s1d = $delete_ebox->signal_connect(enter_notify_event=>sub{$delete_label->set_markup(text_u($trans{mail_delete}));});
@@ -2342,24 +2328,16 @@ sub notify {
 			});
 			$delete_ebox->add($delete_label);
 			$hbox_opt->pack_start($delete_ebox,0,0,0);
-			
+
 		}
-		
+
 		# --- Mail body ---
-		
+
 		my $hbox_b = Gtk2::HBox->new(0,0);
 		$notify_vbox->pack_start($hbox_b,0,0,0);
-		
+
 		my $body_l;
-		if ($libsexy) {
-			$body_l = Gtk2::Sexy::UrlLabel->new;
-			$body_l->signal_connect(url_activated => sub{
-				my ($url_label, $url) = @_;
-				run_command($gmail_command, $url);
-			});
-		} else {
-			$body_l = Gtk2::Label->new;
-		}
+		$body_l = Gtk2::Label->new;
 		$body_l->set_line_wrap(1);
 		# my ($w, $h) = $body_l->get_size_request;
 		# print "($w, $h)\n";
@@ -2368,14 +2346,14 @@ sub notify {
 		# $body_l->set_selectable(1);
 		# $body_l->set_max_width_chars(100);
 
-		
+
 		my $term = ($count == $number) ? "" : "\n";
 		$body_l->set_markup("<span foreground=\"grey25\">$body</span>$term");
 		$hbox_b->pack_start($body_l,0,0,0);
 	}
-				
+
 	$win_notify_temp->add($notifybox_b);
-		
+
 	# If popup was previously displayed, re-show it ...
 	if ($redisplay) {
 		show_notify($win_notify_temp);
@@ -2405,8 +2383,8 @@ sub check_icon {
 
 sub http_get_main {
 	my ($address) = @_;
-	
-	my $ua = LWP::UserAgent->new();		
+
+	my $ua = LWP::UserAgent->new();
 	my $req = HTTP::Request->new(GET => "$address");
 
 	my $response = $ua->request($req);
@@ -2414,12 +2392,12 @@ sub http_get_main {
 		print "error!\n";
 		return 0;
 	}
-	
+
 	my $http = $response->content;
-	
+
 	return $http;
-	
-	
+
+
 }
 
 sub text_norm {
@@ -2440,33 +2418,33 @@ sub text_u {
 sub get_login_href {
 	# Login directly to gmail ...
 	$_ = shift;
-	
+
 	# The following is for people who like to stay permanently logged in ...
 	# (enable with -no-login on the command-line for now ...)
 	return $_ if $nologin;
-	
+
 	my ($options) = m/.*?\?(.*)/;
 	my $options_uri = $options ? "?&$options" : "";
-	
+
 	s/@/%40/g; # @ needs to be escaped in gmail address
 	s/http([^s])/https$1/g; # let's make it secure!
-	
+
 	print "get_login_href : login command is: $_\n" unless $silent;
 
-	my $escaped_uri = URI_escape($_);	
+	my $escaped_uri = URI_escape($_);
 	my $URI_user = URI_escape($user);
 	my $URI_passwd = URI_escape($passwd_decrypt);
-	
+
 	my $target_uri;
 	if ($hosted) {
 		$target_uri = "http://mail.google.com/a/$hosted/$options_uri";
 	} else {
 		$target_uri = "https://accounts.google.com/ServiceLoginAuth?ltmpl=yj_wsad&ltmplcache=2&continue=$escaped_uri&service=mail&rm=false&ltmpl=yj_wsad&Email=$URI_user&Passwd=$URI_passwd&rmShown=1&null=Sign+in";
 	}
-	
+
 	return $target_uri;
 }
-	
+
 
 sub gen_action_url {
 	# I have a feeling that these complicated form post arguments are going to change
@@ -2474,22 +2452,22 @@ sub gen_action_url {
 	# updates a bit easier!
 	my ($act, $id) = @_;
 	my $search;
-	
+
 	# Now that we can grab the full text of messages, we'd better clear the cache while we're here ...
 	# NB - I realise this won't remove all cached text, in the rare event someone looks at the full message text,
 	# and then opens it manually in the webbrowser - but it's the simplest solution for now ...
 	unless ($act =~ m/st/) {
 		$messages_ext{$id}=undef;
 	}
-	
+
 	# Undeleting items from trash needs to have the search variable as "trash"
 	# - this is a quick hack to get around it!
 	($act, $search) = split(":",$act);
 	$search ||= 'all';
-	
+
 	my $prefix = gen_prefix_url();
 	return ("POST:$prefix/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1&rt=j");
-	
+
 	# if ($hosted) {
 		# return ("POST:mail.google.com/a/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
 	# } else {
@@ -2510,9 +2488,9 @@ sub undo_last {
 	# Undo last Gmail action ...
 	print "undo called\n" unless $silent;
 	return unless @undo_buffer;
-	
+
 	notify($trans{notify_undoing});
-	
+
 	my $label;
 	foreach my $i (@undo_buffer) {
 		my $id = shift(@$i);
@@ -2527,12 +2505,12 @@ sub undo_last {
 
 sub get_screen {
 	my ($boxx, $boxy)=@_;
-	
+
 	# get screen resolution
 	my $monitor = $eventbox->get_screen->get_monitor_at_point($boxx,$boxy);
     	my $rect = $eventbox->get_screen->get_monitor_geometry($monitor);
 	my $height = $rect->height;
-	
+
 	# support multiple monitors (thanks to Philip Jagielski for this simple solution!)
 	my $width;
 	unless ($disable_monitors_check) {
@@ -2542,35 +2520,35 @@ sub get_screen {
 	} else {
 		$width = $eventbox->get_screen->get_monitor_geometry($monitor)->width;
 	}
-	
+
 	return ($monitor,$rect,$width,$height);
 }
 
 sub show_notify {
 	# We can only get the allocated width when the window is shown,
 	# so we do all this calculation in a separate subroutine ...
-	my ($win_notify_temp) = @_;	
+	my ($win_notify_temp) = @_;
 	my $new_win = $win_notify_temp ? $win_notify_temp : $win_notify;
-	
+
 	# get eventbox origin and icon height
 	my ($boxx, $boxy) = $eventbox->window->get_origin;
 	my $icon_height = $eventbox->allocation->height;
-	
+
 	# get screen resolution
 	my ($monitor,$rect,$width,$height)=get_screen($boxx, $boxy);
-	
+
 	# if the tray icon is at the top of the screen, it's safe to move the window
 	# to the previous window's position - this makes things look a lot smoother
 	# (we can't do it when the tray icon's at the bottom of the screen, because
 	# a larger window will cover the icon, and when we move it we'll get another
 	# show_notify() event)
 	$new_win->move($old_x,$old_y) if (($boxy<($height/2)) && ($old_x || $old_y));
-	
+
 	# show the window to get width and height
 	$new_win->show_all unless ($new_win->visible);
 	my $notify_width=$new_win->allocation->width;
 	my $notify_height=$new_win->allocation->height;
-		
+
 	if ($notify_height>($height-$icon_height-20)) {
 		# print "begin block\n";
 		$reshow=1;
@@ -2581,39 +2559,39 @@ sub show_notify {
 		$scrolled->set_policy('never','automatic');
 		$scrolled->set_shadow_type('GTK_SHADOW_NONE');
 		$notify_vbox_b->pack_start($scrolled,1,1,0);
-		
+
 		my $scrolled_event = Gtk2::EventBox->new;
 		$scrolled_event->modify_bg('normal', Gtk2::Gdk::Color->new (0, 0, 0));
-		
+
 		$scrolled->add_with_viewport($scrolled_event);
-		
-				
+
+
 		$new_win->resize($notify_width, $height-$icon_height-20);
 		$notifybox->reparent($scrolled_event);
-		
+
 		$new_win->show_all;
 		$new_win->resize($notify_width, $height-$icon_height-20);
 		# print "vadj = $vadj\n";
-				
+
 		$notify_height=$new_win->allocation->height;
 		$notify_width=$new_win->allocation->width;
 	}
-			
+
 	# calculate best position
 	my $x_border = 4;
 	my $y_border = 5;
 	my $move_x = ($boxx+$notify_width+$x_border > $width) ? ($width-$notify_width-$x_border) : ($boxx);
 	my $move_y = ($boxy>($height/2)) ? ($boxy-$notify_height-$y_border) : ($boxy+$icon_height+$y_border);
-	
+
 	# move the window
 	$new_win->move($move_x,$move_y) if ($move_x || $move_y);
 	Gtk2->main_iteration while (Gtk2->events_pending);
-	
+
 	# $new_win->show_all unless ($new_win->visible);
 	# Gtk2->main_iteration while (Gtk2->events_pending);
 
 	# $scrolled->set_vadjustment($vadj) if $vadj;
-	
+
 	# a small sleep to make compiz work better
 	# select(undef, undef, undef, 0.150);
 	if ($win_notify_temp) {
@@ -2623,9 +2601,9 @@ sub show_notify {
 	}
 	# Gtk2->main_iteration while (Gtk2->events_pending);
 
-	
+
 	($old_x, $old_y) = ($move_x,$move_y);
-	
+
 	# Enter/leave notification
 	$win_notify->signal_connect('enter_notify_event', sub {
 		# print "enter\n";
@@ -2634,7 +2612,7 @@ sub show_notify {
 			$reshow=0;
 		});
 	});
-	
+
 	$win_notify->signal_connect('leave_notify_event', sub {
 		# print "leave event ...\n";
 		return if ($reshow);
@@ -2644,7 +2622,7 @@ sub show_notify {
 		if ($event->detail eq 'inferior') {
 			return;
 		}
-		
+
 		# print "leave and hide\n";
 		$notify_enter = 0;
 		$notify_vis = 0;
@@ -2655,87 +2633,87 @@ sub show_notify {
 sub popup {
 	# pops up a little message for new mail - disable by setting popup time to 0
 	return unless $popup_delay;
-	
+
 	# no point displaying if the user is already looking at the popup ..
 	return if (($win_notify) && ($win_notify->visible));
-	
+
 	my ($text) = @_;
-	
+
 	$popup_win->destroy if $popup_win;
-	
+
 	$popup_win = Gtk2::Window->new('popup');
 	$popup_win->set('allow-shrink',1);
 	$popup_win->set_border_width(2);
 	$popup_win->modify_bg('normal', Gtk2::Gdk::Color->new (14756, 20215, 33483));
-	
+
 	# the eventbox is needed for the background ...
 	my $popupbox = Gtk2::EventBox->new;
 	$popupbox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
-	
+
 	# the hbox gives an internal border, and allows us to chuck an icon in, too!
 	my $popup_hbox = Gtk2::HBox->new (0, 0);
 	$popup_hbox->set_border_width(4);
 	$popupbox->add($popup_hbox);
-	
+
 	# Popup icon
 	my $popup_icon = Gtk2::Image->new_from_pixbuf($mail_pixbuf);
 	$popup_hbox->pack_start($popup_icon,0,0,3);
-	
+
 	my $popuplabel = Gtk2::Label->new;
 	$popuplabel->set_line_wrap(1);
-	
+
 	$popuplabel->set_markup("$text");
 	$popup_hbox->pack_start($popuplabel,0,0,3);
 	$popupbox->show_all;
-	
+
 	$popup_win->add($popupbox);
-	
+
 	# get eventbox origin and icon height
 	my ($boxx, $boxy) = $eventbox->window->get_origin;
 	my $icon_height = $eventbox->allocation->height;
-	
+
 	# get screen resolution
 	my ($monitor,$rect,$width,$height)=get_screen($boxx, $boxy);
-		
+
 	# show the window to get width and height
 	$popup_win->show_all;
 	my $popup_width=$popup_win->allocation->width;
 	my $popup_height=$popup_win->allocation->height;
 	$popup_win->hide;
 	$popup_win->resize($popup_width, 1);
-	
+
 	# calculate best position
 	my $x_border = 4;
 	my $y_border = 6;
 	my $move_x = ($boxx+$popup_width+$x_border > $width) ? ($width-$popup_width-$x_border) : ($boxx);
 	my $move_y = ($boxy>($height/2)) ? ($boxy-$popup_height-$y_border) : ($icon_height+$y_border);
-	
+
 	my $shift_y = ($boxy>($height/2)) ? 1 : 0;
-	
+
 	$popup_win->move($move_x,$move_y);
 	$popup_win->show_all;
-			
+
 	# and popup ...
 	my $ani_delay = 0.015;
 	for (my $i = 1; $i<=$popup_height; $i++) {
 		my $move_y = ($shift_y) ? ($boxy-$i-$y_border) : $move_y;
-		
+
 		# move the window
 		$popup_win->move($move_x,$move_y);
 		$popup_win->resize($popup_width, $i);
 		Gtk2->main_iteration while (Gtk2->events_pending);
-		
+
 		select(undef,undef,undef,$ani_delay);
 	}
-	
-		
+
+
 	my $close = Glib::Timeout->add($popup_delay, sub { popdown($popup_height, $popup_width, $shift_y, $move_y, $boxy, $y_border, $move_x) });
 }
 
 sub popdown {
 	# Hides the popup box with animation ...
 	my ($popup_height, $popup_width, $shift_y, $move_y, $boxy, $y_border, $move_x) = @_;
-	
+
 	for (my $i = $popup_height; $i>0; $i--) {
 		my $move_y = ($shift_y) ? ($boxy-$i-$y_border) : $move_y;
 
@@ -2743,14 +2721,14 @@ sub popdown {
 		$popup_win->move($move_x,$move_y);
 		$popup_win->resize($popup_width, $i);
 		Gtk2->main_iteration while (Gtk2->events_pending);
-		
+
 		select(undef,undef,undef,0.015);
 	}
-	
+
 	$popup_win->destroy;
 }
 
-	
+
 #######################
 # Popup menu handling
 #
@@ -2758,10 +2736,10 @@ sub popdown {
 sub handle_button_press {
 	# Modified from yarrsr ...
     	my ($widget, $event) = @_;
-    	
+
     	my $x = $event->x_root - $event->x;
     	my $y = $event->y_root - $event->y;
-    	
+
 	if ($event->button == 1) {
 		open_gmail();
     	} else {
@@ -2772,18 +2750,18 @@ sub handle_button_press {
 sub position_menu {
     	# Modified from yarrsr
     	my ($x, $y) = @_;
-	
+
     	my $monitor = $menu->get_screen->get_monitor_at_point($x,$y);
     	my $rect = $menu->get_screen->get_monitor_geometry($monitor);
-	
+
     	my $space_above = $y - $rect->y;
     	my $space_below = $rect->y + $rect->height - $y;
-	
+
     	my $requisition = $menu->size_request();
-	
+
     	if ($requisition->height <= $space_above || $requisition->height <= $space_below) {
 		if ($requisition->height <= $space_below) {
-    			$y = $y + $eventbox->allocation->height; 
+    			$y = $y + $eventbox->allocation->height;
 		} else {
     			$y = $y - $requisition->height;
 		}
@@ -2796,17 +2774,17 @@ sub position_menu {
     	} else {
 			$y = $rect->y;
     	}
-	
+
     	return ($x,$y,1);
 }
 
 
 sub pack_menu {
-	# This code (and the relevant menu display routine) is based 
+	# This code (and the relevant menu display routine) is based
 	# on code from yarrsr (Yet Another RSS Reader) (http://yarrsr.sf.net)
 
 	$menu = Gtk2::Menu->new;
-	
+
 	my $menu_check = Gtk2::ImageMenuItem->new($trans{menu_check});
 	$menu_check->set_image(Gtk2::Image->new_from_stock('gtk-refresh','menu'));
 	$menu_check->signal_connect('activate',sub {
@@ -2815,7 +2793,7 @@ sub pack_menu {
 			queue_check($label);
 		}
 	});
-	
+
 	my $menu_undo;
 	if ($cookies) {
 		# Undo last POST action
@@ -2823,36 +2801,36 @@ sub pack_menu {
 		$menu_undo->set_image(Gtk2::Image->new_from_stock('gtk-undo','menu'));
 		$menu_undo->signal_connect('activate', \&undo_last);
 	}
-	
+
 	my $menu_compose = Gtk2::ImageMenuItem->new($trans{menu_compose});
 	$menu_compose->set_image(Gtk2::Image->new_from_pixbuf(load_pixbuf($compose_mail_data)));
 	$menu_compose->signal_connect('activate',sub {
 		run_command($gmail_command, get_login_href("https://mail.google.com/mail/u/0/??view=cm&tf=0#compose"));
 	});
-	
+
 	my $menu_prefs = Gtk2::ImageMenuItem->new($trans{menu_prefs});
 	$menu_prefs->set_image(Gtk2::Image->new_from_stock('gtk-preferences','menu'));
 	$menu_prefs->signal_connect('activate',sub {
 		show_prefs();
 	});
-	
+
 	my $menu_about = Gtk2::ImageMenuItem->new($trans{menu_about});
 	$menu_about->set_image(Gtk2::Image->new_from_stock('gtk-about','menu'));
 	$menu_about->signal_connect('activate',sub {
 		about();
 	});
-	
+
 	my $menu_restart = Gtk2::ImageMenuItem->new($trans{menu_restart});
 	#$menu_about->set_image(Gtk2::Image->new_from_stock('gtk-about','menu'));
 	$menu_restart->signal_connect('activate',sub {
 		restart();
 	});
-	
+
 	my $menu_quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
 	$menu_quit->signal_connect('activate',sub {
 			Gtk2->main_quit;
 	});
-	
+
 	# Pack menu ...
 	$menu->append($menu_check);
 	$menu->append($menu_undo) if $cookies;
@@ -2863,7 +2841,7 @@ sub pack_menu {
 	$menu->append(Gtk2::SeparatorMenuItem->new);
 	$menu->append($menu_restart);
 	$menu->append($menu_quit);
-	
+
 	$menu->show_all;
 }
 
@@ -2879,7 +2857,7 @@ sub restart {
 sub show_prefs {
 	# The preferences dialogue ...
 	# Yes, I know, I know - it's getting seriously ugly, isn't it?? :)
-	
+
 	my $dialog = Gtk2::Dialog->new ($trans{prefs}, undef,
                                     	'destroy-with-parent',
                                     	'gtk-ok' => 'ok',
@@ -2889,20 +2867,20 @@ sub show_prefs {
 	my $hbox = Gtk2::HBox->new (0, 0);
 	$hbox->set_border_width (4);
 	$dialog->vbox->pack_start ($hbox, 0, 0, 0);
-	
+
 	my $vbox = Gtk2::VBox->new (0, 4);
 	$hbox->pack_start ($vbox, 0, 0, 4);
-	
+
 	my $frame_login = Gtk2::Frame->new ("$trans{prefs_login}");
 	$vbox->pack_start ($frame_login, 0, 0, 4);
-	
+
 		my $table_login = Gtk2::Table->new (2, 3, 0);
       		$table_login->set_row_spacings (4);
       		$table_login->set_col_spacings (4);
 				$table_login->set_border_width (5);
 
 		$frame_login->add($table_login);
-		
+
 		my $label_user = Gtk2::Label->new_with_mnemonic ($trans{prefs_login_user});
 				$label_user->set_alignment (0, 0.5);
       		$table_login->attach_defaults ($label_user, 0, 1, 0, 1);
@@ -2926,7 +2904,7 @@ sub show_prefs {
 						$table_login->attach_defaults ($entry_pwd, 1, 2, 1, 2);
 						$label_pwd->set_mnemonic_widget ($entry_pwd);
 				$entry_pwd->signal_connect(activate=>sub {$dialog->response('ok')});
-		
+
 		my $button_passwd = Gtk2::CheckButton->new_with_label($trans{prefs_login_save});
 				$table_login->attach_defaults($button_passwd, 0, 2, 2, 3 );
 				$button_passwd->set_active(1) if ($save_passwd);
@@ -2973,7 +2951,7 @@ sub show_prefs {
 						$use_two_factor_auth_pref = ($button_enable_two_factor->get_active) ? 1 : 0;
 					}
 				);
-		
+
 		# save web password
 		my $button_two_factor_save_web_passwd = Gtk2::CheckButton->new_with_label($trans{prefs_two_factor_save_main_google_password});
 				$table_two_factor->attach_defaults($button_two_factor_save_web_passwd, 0, 2, 2, 3 );
@@ -2996,21 +2974,21 @@ sub show_prefs {
 					}
 				);
 
-	
+
 	my $frame_lang = Gtk2::Frame->new ("$trans{prefs_lang}");
 	$vbox->pack_start ($frame_lang, 0, 0, 4);
-		
+
 		my $vbox_lang = Gtk2::VBox->new (0, 0);
 		$frame_lang->add($vbox_lang);
 		$vbox_lang->set_border_width(6);
-		
+
 			my $lang_option = Gtk2::OptionMenu->new;
 			my $lang_menu = Gtk2::Menu->new;
-			
+
 			my $xmlin = XMLin($translations, ForceArray => 1);
 			my $count = 0;
 			my $index;
-			
+
 			my @langs = keys(%{$xmlin->{Language}});
 			@langs = sort(@langs);
 			# foreach (keys(%{$xmlin->{Language}})) {
@@ -3020,134 +2998,134 @@ sub show_prefs {
 				$index = $count if ($_ eq $language); # check which index number is the currently selected langauge
 				$count++;
 			}
-			
+
 			$lang_option->set_menu($lang_menu);
 			$lang_option->set_history($index);
 			$vbox_lang->pack_start($lang_option,0,0,3);
 
-											
+
 	my $frame_external = Gtk2::Frame->new ("$trans{prefs_external}");
 	$vbox->pack_start ($frame_external, 0, 0, 4);
-		
+
 		my $vbox_external = Gtk2::VBox->new (0, 0);
 		$frame_external->add($vbox_external);
 		$vbox_external->set_border_width(6);
-		
+
 			# my $hbox_browser = Gtk2::HBox->new (0,0);
 			# $vbox_external->pack_start($hbox_browser,1,1,2);
-				
+
 			my $exe_label = Gtk2::Label->new_with_mnemonic($trans{prefs_external_browser});
 			$exe_label->set_line_wrap(1);
 			$exe_label->set_alignment (0, 0.5);
 			$vbox_external->pack_start($exe_label,0,0,2);
-			
+
 			my $exe_label2 = Gtk2::Label->new();
 			$exe_label2->set_markup("<small>$trans{prefs_external_browser2}</small>");
 			$exe_label2->set_line_wrap(1);
 			$exe_label2->set_alignment (0, 0.5);
 			$vbox_external->pack_start($exe_label2,0,0,2);
-			
-			
+
+
 			my $hbox_exe = Gtk2::HBox->new (0,0);
 			$vbox_external->pack_start($hbox_exe,1,1,3);
-			
+
 				my $label_exe_sp = Gtk2::Label->new("   ");
 				$label_exe_sp->set_alignment (0, 0.5);
       				$hbox_exe->pack_start($label_exe_sp, 0, 0, 0);
-				
+
 				my $exe_entry = Gtk2::Entry->new();
 				$exe_entry->set_width_chars(14);
 				$exe_entry->set_text($gmail_command);
 				$hbox_exe->pack_end($exe_entry,1,1,0);
-				
+
 			$vbox_external->pack_start (Gtk2::HSeparator->new, 0, 0, 4);
-			
+
 			my $label_notify = Gtk2::Label->new_with_mnemonic ($trans{prefs_external_mail_command});
 			$label_notify->set_line_wrap(1);
 			$label_notify->set_alignment (0, 0.5);
 			$vbox_external->pack_start($label_notify,0,0,3);
-			
+
 			my $hbox_notify = Gtk2::HBox->new (0,0);
 			$vbox_external->pack_start($hbox_notify,1,1,3);
-		
+
  				my $label_notify_sp = Gtk2::Label->new("   ");
 				$label_notify_sp->set_alignment (0, 0.5);
       				$hbox_notify->pack_start($label_notify_sp, 0, 0, 0);
-				
+
      				my $entry_notify = Gtk2::Entry->new;
 				$entry_notify->append_text($notify_command) if $notify_command;
 				$entry_notify->set_width_chars(15);
       				$hbox_notify->pack_start($entry_notify, 1, 1, 0);
       				$label_notify->set_mnemonic_widget ($entry_notify);
-				
+
 			my $label_notify_none = Gtk2::Label->new_with_mnemonic ($trans{prefs_external_nomail_command});
 			$label_notify_none->set_alignment (0, 0.5);
 			$label_notify_none->set_line_wrap(1);
 			$vbox_external->pack_start($label_notify_none,0,0,3);
-			
+
 			my $hbox_notify_none = Gtk2::HBox->new (0,0);
 			$vbox_external->pack_start($hbox_notify_none,1,1,3);
-		
+
  				my $label_notify_none_sp = Gtk2::Label->new("   ");
 				$label_notify_none_sp->set_alignment (0, 0.5);
       				$hbox_notify_none->pack_start($label_notify_none_sp, 0, 0, 0);
-				
+
      				my $entry_notify_none = Gtk2::Entry->new;
 				$entry_notify_none->set_width_chars(15);
 				$entry_notify_none->append_text($nomail_command) if $nomail_command;
       				$hbox_notify_none->pack_start($entry_notify_none, 1, 1, 0);
       				$label_notify_none->set_mnemonic_widget ($entry_notify_none);
 				# $vbox_external->pack_start($entry_notify_none,0,0,3);
-				
+
 
 	my $vbox2 = Gtk2::VBox->new (0, 4);
 	$hbox->pack_start ($vbox2, 0, 0, 4);
-		
+
       	my $frame_check = Gtk2::Frame->new ("$trans{prefs_check}");
 	$vbox2->pack_start ($frame_check, 0, 0, 4);
-		
+
 		my $vbox_check = Gtk2::VBox->new (0, 0);
 		$frame_check->add($vbox_check);
 		$vbox_check->set_border_width(6);
 
 			my $hbox_delay = Gtk2::HBox->new (0,0);
 			$vbox_check->pack_start($hbox_delay,0,0,2);
-			
+
 				my $label_delay = Gtk2::Label->new_with_mnemonic ($trans{prefs_check_delay});
 				$label_delay->set_alignment (0, 0.5);
       				$hbox_delay->pack_start($label_delay, 0, 0, 0);
-				
+
       				my $entry_delay = Gtk2::Entry->new;
 				$entry_delay->set_width_chars(4);
 				$entry_delay->append_text($delay/1000) if $delay;
       				$hbox_delay->pack_start($entry_delay, 0, 0, 0);
       				$label_delay->set_mnemonic_widget ($entry_delay);
-				
+
 				my $label_secs = Gtk2::Label->new_with_mnemonic ($trans{prefs_check_delay2});
 				$label_secs->set_alignment (0, 0.5);
       				$hbox_delay->pack_start($label_secs, 0, 0, 0);
-			
-			
+
+
 			##########
 			# Labels
 			#
-			
+
 				my $labels_label = Gtk2::Label->new_with_mnemonic($trans{prefs_check_labels});
 				$labels_label->set_line_wrap(1);
 				$labels_label->set_alignment (0, 0.5);
 				$vbox_check->pack_start($labels_label,0,0,4);
-				
+
 				convert_labels_from_hash();
-				
+
 				# most of this code is adapted from the treeview.pl example provided with Gtk2-perl ...
 				my $sw = Gtk2::ScrolledWindow->new;
       				$sw->set_shadow_type ('etched-in');
       				$sw->set_policy ('automatic', 'automatic');
       				$vbox_check->pack_start ($sw, 1, 1, 0);
-				
+
       				# create model
 				my $model = Gtk2::ListStore->new (qw/Glib::String Glib::Int/);
-							
+
   				# add labels to model
   				foreach my $a (@labels) {
       					my $iter = $model->append;
@@ -3155,49 +3133,49 @@ sub show_prefs {
                    					0, $a->{label},
                    					1, $a->{delay});
   				}
-	
+
       				# create tree view
       				my $treeview = Gtk2::TreeView->new_with_model ($model);
       				$treeview->set_rules_hint (1);
       				$treeview->get_selection->set_mode ('single');
-				
+
 				# label columns
   				my $renderer = Gtk2::CellRendererText->new;
   				$renderer->signal_connect (edited => \&cell_edited, $model);
   				$renderer->set_data (column => 0);
-				
+
   				$treeview->insert_column_with_attributes (-1, $trans{prefs_check_labels_label}, $renderer,
 					    				text => 0,
 					    				editable => 1);
-				
+
   				# delay column
   				$renderer = Gtk2::CellRendererText->new;
   				$renderer->signal_connect (edited => \&cell_edited, $model);
   				$renderer->set_data (column => 1);
-				
+
   				$treeview->insert_column_with_attributes (-1, $trans{prefs_check_labels_delay}, $renderer,
 					    				text => 1,
 					    				editable => 1);
       				$sw->add ($treeview);
-				
+
       				# buttons for adding and removing labels ...
       				my $label_button_hbox = Gtk2::HBox->new (1, 4);
       				$vbox_check->pack_start ($label_button_hbox, 0, 0, 0);
-				
+
       				my $button_addlabel = Gtk2::Button->new ($trans{prefs_check_labels_add});
       				$button_addlabel->signal_connect (clicked => sub {
 						push @labels, {
 							label => $trans{prefs_check_labels_new},
 							delay => 300,
   						};
-						
+
   						my $iter = $model->append;
   						$model->set ($iter,
                						0, $labels[-1]{label},
                						1, $labels[-1]{delay},);
 					}, $model);
       				$label_button_hbox->pack_start ($button_addlabel, 1, 1, 0);
-				
+
       				my $button_removelabel = Gtk2::Button->new ($trans{prefs_check_labels_remove});
       				$button_removelabel->signal_connect (clicked => sub {
 						my $selection = $treeview->get_selection;
@@ -3210,24 +3188,24 @@ sub show_prefs {
   						}
 					}, $treeview);
       				$label_button_hbox->pack_start ($button_removelabel, 1, 1, 0);
-			
-			
+
+
 			$vbox_check->pack_start (Gtk2::HSeparator->new, 0, 0, 4);
-			
+
 			my $hbox_atom = Gtk2::HBox->new (0,0);
 			$vbox_check->pack_start($hbox_atom,1,1,2);
-			
+
 				my $atom_label = Gtk2::Label->new_with_mnemonic($trans{prefs_check_atom});
 				$hbox_atom->pack_start($atom_label,0,0,2);
-				
+
 				my $atom_entry = Gtk2::Entry->new();
 				$atom_entry->set_width_chars(14);
 				$atom_entry->set_text($gmail_address);
 				$hbox_atom->pack_end($atom_entry,1,1,2);
-			
 
-			
-			# Thanks to Rune Maagensen for adding the 24 hour clock button ...				
+
+
+			# Thanks to Rune Maagensen for adding the 24 hour clock button ...
 			my $button_24h = Gtk2::CheckButton->new_with_label($trans{prefs_check_24_hour});
 			$vbox_check->pack_start($button_24h, 0, 0, 2);
 			$button_24h->set_active(1) if ($time_24);
@@ -3235,7 +3213,7 @@ sub show_prefs {
        					$time_24 = ($button_24h->get_active) ? 1 : 0;
        				}
 			);
-			
+
 			my $button_archive = Gtk2::CheckButton->new_with_label($trans{prefs_check_archive});
 			$vbox_check->pack_start($button_archive, 0, 0, 2);
 			$button_archive->set_active(1) if ($archive_as_read);
@@ -3243,25 +3221,25 @@ sub show_prefs {
        					$archive_as_read = ($button_archive->get_active) ? 1 : 0;
        				}
 			);
-			
 
-	
-		
-	
+
+
+
+
 	my $frame_tray = Gtk2::Frame->new ("$trans{prefs_tray}");
 	$vbox2->pack_start ($frame_tray, 0, 0, 4);
-		
+
 		my $vbox_tray = Gtk2::VBox->new (0, 0);
 		$frame_tray->add($vbox_tray);
 		$vbox_tray->set_border_width(6);
-		
+
 		# There's a lot of Gtk2-perl modules included in distros with only
 		# Gtk-2.4 bindings ... the following code needs 2.6 bindings to funtion
 		if (Gtk2->CHECK_VERSION (2, 6, 0)) {
-						
+
 			my $hbox_icon_m = Gtk2::HBox->new (0,6);
 			$vbox_tray->pack_start($hbox_icon_m, 0, 0, 2);
-			
+
 				my $button_m = Gtk2::CheckButton->new_with_label($trans{prefs_tray_mail_icon});
 				$hbox_icon_m->pack_start($button_m, 0, 0, 0 );
 				$button_m->set_active(1) if ($custom_mail_icon);
@@ -3269,7 +3247,7 @@ sub show_prefs {
 						$custom_mail_icon = ($button_m->get_active) ? 1 : 0;
 					}
 				);
-				
+
 				my $button_m_open = Gtk2::Button->new("");
 				$button_m_open->set_image(Gtk2::Image->new_from_pixbuf($custom_mail_pixbuf));
 				$button_m_open->signal_connect(clicked=>sub {
@@ -3279,10 +3257,10 @@ sub show_prefs {
 					}
 				);
 				$hbox_icon_m->pack_end($button_m_open, 0, 0, 0);
-			
+
 			my $hbox_icon_nom = Gtk2::HBox->new (0,6);
 			$vbox_tray->pack_start($hbox_icon_nom, 1, 1, 2);
-			
+
 				my $button_nom = Gtk2::CheckButton->new_with_label($trans{prefs_tray_no_mail_icon});
 				$hbox_icon_nom->pack_start($button_nom, 0, 0, 0 );
 				$button_nom->set_active(1) if ($custom_no_mail_icon);
@@ -3290,7 +3268,7 @@ sub show_prefs {
 						$custom_no_mail_icon = ($button_nom->get_active) ? 1 : 0;
 					}
 				);
-				
+
 				my $button_nom_open = Gtk2::Button->new("");
 				$button_nom_open->set_image(Gtk2::Image->new_from_pixbuf($custom_no_mail_pixbuf));
 				$button_nom_open->signal_connect(clicked=>sub {
@@ -3300,10 +3278,10 @@ sub show_prefs {
 					}
 				);
 				$hbox_icon_nom->pack_end($button_nom_open, 0, 0, 0);
-				
+
 			my $hbox_icon_error = Gtk2::HBox->new (0,6);
 			$vbox_tray->pack_start($hbox_icon_error, 1, 1, 2);
-			
+
 				my $button_error = Gtk2::CheckButton->new_with_label($trans{prefs_tray_error_icon});
 				$hbox_icon_error->pack_start($button_error, 0, 0, 0 );
 				$button_error->set_active(1) if ($custom_error_icon);
@@ -3311,7 +3289,7 @@ sub show_prefs {
 						$custom_error_icon = ($button_error->get_active) ? 1 : 0;
 					}
 				);
-				
+
 				my $button_error_open = Gtk2::Button->new("");
 				$button_error_open->set_image(Gtk2::Image->new_from_pixbuf($custom_error_pixbuf));
 				$button_error_open->signal_connect(clicked=>sub {
@@ -3321,7 +3299,7 @@ sub show_prefs {
 					}
 				);
 				$hbox_icon_error->pack_end($button_error_open, 0, 0, 0);
-				
+
 		} else {
 			# Warning message if user doesn't have Gtk2.6 bindings ...
 			my $button_gtk_label = Gtk2::Label->new();
@@ -3330,37 +3308,37 @@ sub show_prefs {
 			$button_gtk_label->set_markup($error_text);
 
 			$vbox_tray->pack_start($button_gtk_label, 1, 1, 2);
-		}	
-					
+		}
+
 			$vbox_tray->pack_start (Gtk2::HSeparator->new, 0, 0, 4);
-			
+
 			my $hbox_pdelay = Gtk2::HBox->new (0,0);
 			$vbox_tray->pack_start($hbox_pdelay,0,0,3);
-			
+
 				my $label_pdelay = Gtk2::Label->new_with_mnemonic ($trans{prefs_tray_pdelay});
 				$label_pdelay->set_alignment (0, 0.5);
       				$hbox_pdelay->pack_start($label_pdelay, 0, 0, 0);
-				
+
       				my $entry_pdelay = Gtk2::Entry->new;
 				$entry_pdelay->set_width_chars(3);
 				$entry_pdelay->append_text($popup_delay/1000) if $popup_delay;
       				$hbox_pdelay->pack_start($entry_pdelay, 0, 0, 0);
       				$label_pdelay->set_mnemonic_widget ($entry_pdelay);
-				
+
 				my $label_psecs = Gtk2::Label->new_with_mnemonic ($trans{prefs_tray_pdelay2});
 				$label_psecs->set_alignment (0, 0.5);
       				$hbox_pdelay->pack_start($label_psecs, 0, 0, 0);
-				
+
 			$vbox_tray->pack_start (Gtk2::HSeparator->new, 0, 0, 3);
-			
+
 			my $button_colour = Gtk2::Button->new($trans{prefs_tray_bg});
 			$button_colour->signal_connect(clicked=>\&set_bg_colour);
 			$vbox_tray->pack_start($button_colour,0,0,3);
-			
-				
+
+
 	$dialog->show_all;
     	my $response = $dialog->run;
-	
+
 	if ($response eq 'ok') {
 		# remove passwd from the hash if user requests it ...
 		handle_auth_token_preference($save_passwd, "passwd", $passwd);
@@ -3384,12 +3362,12 @@ sub show_prefs {
 		if ($save_web_passwd) {
 			$web_passwd_decrypt = $entry_web_pwd_two_factor->get_text;
 			$web_passwd = encrypt_real($web_passwd_decrypt);
-		}	
+		}
 
 		if ($save_two_factor_trust_cookie) {
 			# trust cookie is not entered in the prefs, it was set automatically earlier, returned from PIN code validation
 			$two_factor_trust_cookie = encrypt_real($two_factor_trust_cookie_decrypt);
-		}	
+		}
 
 		$delay = ($entry_delay->get_text)*1000;
 		$popup_delay = ($entry_pdelay->get_text)*1000;
@@ -3397,7 +3375,7 @@ sub show_prefs {
 		$gmail_command = $exe_entry->get_text;
 		$notify_command	= $entry_notify->get_text;
 		$nomail_command	= $entry_notify_none->get_text;
-		
+
 		if ($use_kwallet) {
 			if ($save_passwd && (defined $passwd) && $passwd ne "") {
 				store_auth_token_in_kwallet($kwallet_default_password_key, $passwd);
@@ -3411,27 +3389,27 @@ sub show_prefs {
 		}
 
 		reinit_checks();
-				
+
 		write_prefs();
 		set_icons();
 		set_language();
 		pack_menu();
 		queue_check();
 	}
-	
-	$dialog->destroy;	
+
+	$dialog->destroy;
 }
 
 
 sub reinit_checks {
 	Glib::Source->remove($check{inbox}) if $check{inbox};
 	$check{inbox} = Glib::Timeout->add($delay, \&queue_check);
-	
+
 	foreach my $label (keys(%label_delay)) {
 		Glib::Source->remove($check{$label}) if $check{$label};
 		$check{$label} = Glib::Timeout->add(($label_delay{$label}*1000), sub{queue_check($label)});
 		queue_check($label);
-	}		
+	}
 }
 
 
@@ -3484,25 +3462,25 @@ sub login {
 					'gtk-cancel' => 'cancel',
 			);
 	# $dialog_login->set_default_response('ok');
-	
+
 	my $hbox = Gtk2::HBox->new (0, 0);
 	$hbox->set_border_width (4);
 	$dialog->vbox->pack_start ($hbox, 0, 0, 0);
-	
+
 	my $vbox = Gtk2::VBox->new (0, 4);
 	$hbox->pack_start ($vbox, 0, 0, 4);
-	      	
+
 	my $table_login = Gtk2::Table->new (2, 3, 0);
       	$table_login->set_row_spacings (4);
       	$table_login->set_col_spacings (4);
 	$table_login->set_border_width (5);
 
 	$hbox->add($table_login);
-	
+
 	my $label_user = Gtk2::Label->new_with_mnemonic ($trans{prefs_login_user});
 			$label_user->set_alignment (0, 0.5);
       	$table_login->attach_defaults ($label_user, 0, 1, 0, 1);
-	
+
 	my $entry_user = Gtk2::Entry->new;
 			$entry_user->set_width_chars(18);
 			$entry_user->append_text($user) if $user;
@@ -3513,7 +3491,7 @@ sub login {
 	my $label_pwd = Gtk2::Label->new_with_mnemonic ($pwd_label_text);
 			$label_pwd->set_alignment (0, 0.5);
       	$table_login->attach_defaults ($label_pwd, 0, 1, 1, 2);
-	
+
 	my $entry_pwd = Gtk2::Entry->new;
 			$entry_pwd->set_width_chars(18);
 			$entry_pwd->set_invisible_char('*');
@@ -3522,7 +3500,7 @@ sub login {
 					$table_login->attach_defaults ($entry_pwd, 1, 2, 1, 2);
 					$label_pwd->set_mnemonic_widget ($entry_pwd);
 			$entry_pwd->signal_connect(activate=>sub {$dialog->response('ok')});
-	
+
 	my $button_passwd = Gtk2::CheckButton->new_with_label($trans{prefs_login_save});
 			$table_login->attach_defaults($button_passwd, 0, 2, 2, 3 );
 			$button_passwd->set_active(1) if ($save_passwd);
@@ -3534,7 +3512,7 @@ sub login {
 					$save_passwd = ($button_passwd->get_active) ? 1 : 0;
 				}
 			);
-	
+
 	$dialog->show_all;
 	my $response = $dialog->run;
 
@@ -3547,16 +3525,16 @@ sub login {
 		handle_auth_token_preference($save_passwd, "passwd", $passwd);
 		# save at least the username, and optionally the password
 		write_prefs();
-		
+
 		if ($use_kwallet && $save_passwd && (defined $passwd) && $passwd ne "") {
 			store_auth_token_in_kwallet($kwallet_default_password_key, $passwd);
 		}
 
 	} else {
-		$dialog->destroy;	
+		$dialog->destroy;
 		exit 0;
 	}
-	$dialog->destroy;	
+	$dialog->destroy;
 }
 
 # prompt for the web password. This is the password used to access the GMail web UI.
@@ -3571,10 +3549,10 @@ sub get_web_passwd {
 	$web_passwd = encrypt_real($web_passwd_decrypt);
 
 	handle_auth_token_preference($save_web_passwd, "web_passwd", $web_passwd);
-	
+
 	# write out prefs, in case password storage option has changed from the previous value.
-	# e.g. now storing the password, removing the stored password, or updated the stored password. Do not write prefs if password was not stored before, 
-	# and storing it is still not requested. 
+	# e.g. now storing the password, removing the stored password, or updated the stored password. Do not write prefs if password was not stored before,
+	# and storing it is still not requested.
 	if ($previous_save_web_passwd || $save_web_passwd) {
 		write_prefs();
 	}
@@ -3659,7 +3637,7 @@ sub generic_field_dialog {
 		$field_value = $entry_field->get_text;
 	}
 	$dialog->destroy;
-	
+
 	if (defined $checkbox_associated_value) {
 		return ($field_value, $checkbox_associated_value);
 	} else {
@@ -3672,12 +3650,12 @@ sub about {
 	my $text = <<EOF;
 <b>CheckGmail v$version</b>
 Copyright &#169; 2005-7, Owen Marshall
-			
+
 <small>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</small>
 
 <small>Special thanks to Sandro Tosi, Rune Maagensen, Jean-Baptiste Denis, Jochen Hoenicke, Melita Ivkovic, Poika Pilvimaa, Alvaro Arenas, Marek Drwota, Dennis van der Staal, Jordi Sanfeliu, Fernando Pereira, Matic Ahacic, Johan Gustafsson, Satoshi Tanabe, Marius Mihai, Marek Malysz, Ruszkai &#193;kos, Nageswaran Rajendran, &#23385;&#32487;&#19996;, Martin Kody&#353;, Rune Gangst&#248;, Christian M&#252;ller, Luciano Ziegler, Igor Donev and anonymous contributors for translations ...</small>
-		
-http://checkgmail.sf.net		
+
+http://checkgmail.sf.net
 EOF
 	chomp($text);
 	my $dialog = Gtk2::MessageDialog->new_with_markup(undef,
@@ -3699,27 +3677,27 @@ sub set_bg_colour {
 		$colour = Gtk2::Gdk::Color->new($red, $green, $blue);
 		$colorsel->set_current_color ($colour);
 	}
-	
+
 	$colorsel->set_has_palette(1);
-	
+
 	my $response = $dialog->run;
 	if ($response eq 'ok') {
       		$colour = $colorsel->get_current_color;
       		$eventbox->modify_bg('normal', $colour);
-		my $colour_hex = 
+		my $colour_hex =
 			  sprintf("%.2X", ($colour->red  /256))
                   	. sprintf("%.2X", ($colour->green/256))
                   	. sprintf("%.2X", ($colour->blue /256));
 		$background = $colour_hex;
 	}
-	
+
 	$dialog->destroy;
-	
+
 }
 
 sub get_icon_file {
 	my ($pointer) =  @_;
-	
+
 	my $icon_browser = Gtk2::FileChooserDialog->new(
 			"Select icon file ...",
 			undef,
@@ -3727,51 +3705,51 @@ sub get_icon_file {
 			'gtk-cancel' => 'cancel',
 			'gtk-ok' => 'ok',
 	);
-	
+
 	my $filter = Gtk2::FileFilter->new;
 	$filter->add_pixbuf_formats;
 	$filter->set_name("Image files");
 
 	$icon_browser->add_filter($filter);
 
-	
+
 	my $response = $icon_browser->run;
-	
+
 	my $icon;
 	if ($response eq 'ok') {
 		$icon = $icon_browser->get_filename;
 		$$pointer = $icon;
 	}
-	
+
 	$icon_browser->destroy;
 }
 
 sub set_icons {
-	
+
 	# Load custom or default icons for mail status notification ...
-	
+
 	# load defaults
 	$mail_pixbuf = load_pixbuf($mail_data);
 	$no_mail_pixbuf = load_pixbuf($no_mail_data);
 	$error_pixbuf = load_pixbuf($error_data);
 	$star_pixbuf = load_pixbuf($star_on_data);
 	$nostar_pixbuf = load_pixbuf($star_off_data);
-	
+
 	# load custom icons if defined
 	$custom_mail_pixbuf = Gtk2::Gdk::Pixbuf->new_from_file($mail_icon) if $mail_icon;
 	$custom_no_mail_pixbuf = Gtk2::Gdk::Pixbuf->new_from_file($no_mail_icon) if $no_mail_icon;
 	$custom_error_pixbuf = Gtk2::Gdk::Pixbuf->new_from_file($error_icon) if $error_icon;
-	
+
 	# set custom pixbufs to defaults if undefined
 	$custom_mail_pixbuf ||= $mail_pixbuf;
 	$custom_no_mail_pixbuf ||= $no_mail_pixbuf;
 	$custom_error_pixbuf ||= $error_pixbuf;
-	
+
 	# set icon pixbufs to custom pixbufs if user requested
 	$mail_pixbuf = $custom_mail_pixbuf if $custom_mail_icon;
 	$no_mail_pixbuf = $custom_no_mail_pixbuf if $custom_no_mail_icon;
 	$error_pixbuf = $custom_error_pixbuf if $custom_error_icon;
-		
+
 }
 
 sub set_icon {
@@ -3817,7 +3795,7 @@ sub convert_hex_to_colour {
 	$red = hex($red)*256;
 	$green = hex($green)*256;
 	$blue = hex($blue)*256;
-	
+
 	return ($red, $green, $blue);
 }
 
@@ -3828,16 +3806,16 @@ sub convert_hex_to_colour {
 
 sub load_pixbuf {
 	my $data = shift;
-	
+
 	my $loader = Gtk2::Gdk::PixbufLoader->new;
 	$loader->write ($data);
 	$loader->close;
-	
+
 	return $loader->get_pixbuf;
 }
 
 sub load_icon_data {
-	
+
 	$error_data = unpack("u",
 'MB5!.1PT*&@H````-24A$4@```!`````0"`8````?\_]A````!F)+1T0`_P#_
 M`/^@O:>3````"7!(67,```QU```,=0$M>)1U````!W1)344\'U047"@0$Y9]#
@@ -3851,7 +3829,7 @@ M9K4R+!;CH>\?9"(%<-!@I=[MU@(JX!4/!J9,DK&CU`P8`7O`MQJ7RR5VGH/G
 M=0)N@)_KVUNSOKX>VV$XP_-<)XIZB/2;[0!VGE,F"788_OZ5`=(@L\'Z<GKHU
 MKE>T<=Y"%A<7KQ\Q#0(+^#\,X\'F=!A:P"QR62?)O_!GS`K6COO-L,Q_/````
 )`$E%3D2N0F""');
-	
+
 	$no_mail_data = unpack("u",
 'MB5!.1PT*&@H````-24A$4@```!`````0"`0```"U^C?J`````F)+1T0`_X>/
 MS+\````)<$A9<P``#\'4```QU`2UXE\'4````\'=$E-10?5!!D#+C1^0]HI````
@@ -3859,7 +3837,7 @@ MB$E$050HS\7/H1&#0!!&X2^9E\'"2X!DD+K7@HE)%*L%1"PY)!;%("HBXRW\'$
 M1N1WN^_M[BR_YO1XPLWU"[Q,X!++R5U7X#EASG&^,I@+/*C<=J%7%TK$M;X\
 MT1LQP`%G@29!*G6J"F&UY6:ML5F%75@M6D%G1)\[68A8@A"TEOV+#RX3CAO^
 6FC<\3AZN>\`BO0````!)14Y$KD)@@@``');
-	
+
 	$mail_data = unpack("u",
 'MB5!.1PT*&@H````-24A$4@```!`````0"`8````?\_]A````"7!(67,```QU
 M```,=0$M>)1U````!W1)344\'U008#C<OWT).ZP```-))1$%4.,OED3$.@S`,
@@ -3868,7 +3846,7 @@ M^+4.0]L^U^!B#.>J^@H\AH&[]S$^R>3=>ZY-`\:D:>^Y"1C@*+L79<GH\'&R*
 M5GATCJ(LN8@&T4!92U[7:1,!YW6-LC:]@K(6G`-@=([K<O\)WAD`J*:)YW$Q
 MB[#(I0U"8)ZF7>$*S]-$%@)HG3`(@;GOR;H.M$89$]=9Q\YDS=9`PF]O(J4U
 E6=<Q]_W^%[;P1RTFR0G^5"_P^T_]<U3R]`````!)14Y$KD)@@@``');
-	
+
 	$compose_mail_data = unpack("u",
 'MB5!.1PT*&@H````-24A$4@```!`````0"`8````?\_]A````!F)+1T0`_P#_
 M`/^@O:>3````"7!(67,```L2```+$@\'2W7[\````!W1)344\'U0L#%PT06C)B
@@ -3919,7 +3897,7 @@ M]]?7Z)=*I07@2]BT(B*K8>UKL5A<(-C`+UP/1RR3R9C`1$2>>IZ7\#Q/1,0!
 M7J52*1,PYDUPLU:KQ555C0([AX>\'MFF:)Z9IGO1ZO7/@B:JJ>JO52@#160):
 M-!J=CD:CD659QY5*Y9UMVZ>>YYU6J]6WEF4=V[9]KBC*)4\'H@-^=5`C<58$1
 C0>JNPB#XF5/@#!#^!WX"JHNT6FM(-L<`````245.1*Y"8((`');
-	
+
 }
 
 
@@ -5695,35 +5673,35 @@ sub read_translations {
 
 EOF
 	my $def_xml = XMLin($default_translations, ForceArray => 1);
-		
+
 	unless (-e "$prefs_dir/lang.xml") {
 		print "Creating translations file at $prefs_dir/lang.xml ...\n";
 		# If there isn't a translation file, we create a default one
 		$translations = $default_translations;
 		open(LANG, ">$prefs_dir/lang.xml") || die("Could not open lang.xml file for writing: $!");
 		print LANG $translations;
-		close LANG;	
+		close LANG;
 	} else {
 		# read translations file if it exists
 		open(LANG, "<$prefs_dir/lang.xml") || die("Could not open lang.xml file for reading: $!");
 		$translations = join("",<LANG>);
 		close LANG;
 	}
-				
+
 	my $xmlin = XMLin($translations, ForceArray => 1);
-	
+
 	my $user_trans_v = $xmlin->{Version};
-				
+
 	my $trans_mod;
 	foreach my $lang (keys(%{$def_xml->{Language}})) {
 		# print "checking $lang\n";
-		
+
 		# Check that all translation keys exist, and add in those that don't from defaults ...
 		if ($def_xml->{Language}->{$lang}) {
 			# user language exists in defaults
 			# next if $lang eq 'English';
 			foreach (keys(%{$def_xml->{Language}->{English}})) {
-				
+
 				if ($lang eq 'English') {
 					next if ($xmlin->{Language}->{$lang}->{$_} && ($xmlin->{Language}->{$lang}->{$_} eq $def_xml->{Language}->{$lang}->{$_}));
 					$xmlin->{Language}->{$lang}->{$_} = $def_xml->{Language}->{$lang}->{$_};
@@ -5751,17 +5729,17 @@ EOF
 			}
 		}
 	}
-	
+
 	foreach (keys(%{$def_xml->{Language}})) {
 		# Check that all translation languages are present, and add in those that don't from defaults ...
 		my $lang = $_;
 		unless ($xmlin->{Language}->{$lang}) {
 			$xmlin->{Language}->{$lang} = $def_xml->{Language}->{$lang};
 			$trans_mod = 1;
-		} 				
+		}
 	}
-	
-	
+
+
 	if ($trans_mod) {
 		$xmlin->{Version} = $version;
 		$translations = XMLout($xmlin, AttrIndent=>1);
@@ -5777,10 +5755,10 @@ EOF
 
 sub set_language {
 	my $xmlin = XMLin($translations, ForceArray => 1);
-	
+
 	## For debugging ...
 	# use Data::Dumper;
 	# print Dumper $xmlin;
-	
+
 	%trans = %{$xmlin->{Language}->{$language}};
 }

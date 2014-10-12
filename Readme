@@ -40,10 +40,8 @@ In addition, for the ability to save encrypted passwords, you'll need these modu
 
 And to be able to use custom icons for the mail status, you'll need:
 
-	Gtk >= 2.6
-	Gtk2-Perl bindings updated to Gtk-2.6
-
-(Ubuntu (5.04) in particular provides Gtk 2.6, and Gtk2-Perl, but for some inexplicable reason their version of Gtk2-Perl has bindings to Gtk 2.4, not Gtk 2.6 ...)
+	Gtk >= 2.18
+	Gtk2-Perl bindings updated to Gtk-2.18
 
 Ubuntu users (and others) may find the following web HOWTO useful, which details and simplifies the install process nicely:
 
@@ -62,5 +60,5 @@ Contact
 Contact the author at
 
 	owenjm@users.sourceforge.net
-	
+
 Suggestions, feedback, further ideas on password protection and security, feature requests and bug reports are welcome.
