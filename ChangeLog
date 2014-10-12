@@ -3,6 +3,7 @@
 - Changed: Tray icon transparency should now work (I think!)  It's a kludgy hack, but it works for Ubuntu's default theme for Lucid Lynx (10.04), and seems to work for most other GTK themes.  Setting the tray icon background doesn't work anymore, and should be deprecated soon.
 - Changed: -no_login is now default behaviour (since we can no longer log into Gmail directly)
 - Lots of other bugfixes, compatibility fixes and changes
+- applied 2 factor + kwallet patches from romainguinot, see https://gist.github.com/romainguinot/5065977
 
 (Version 1.13 - 19/1/08)
 - New Feature: -update command-line switch will download the latest version of the program from SVN and show the user a diff between the two versions, before asking the user if they want to upgrade.  This feature will hopefully be improved in newer versions (at the moment there is no version tracking or checking routinely for updates).
@@ -67,7 +68,7 @@
 - New feature: Ability to check labels for new mail.  Internal mail notification/checking routines completely rewritten to allow this.  Some major changes:
 	* A global array @messages is now used to store the details of new messages.  The check rountine is called for each label, and removes previous messages for that label from @messages, adds the new messages found back to @messages, and calls the popup display routines if any of those messages is a new message based on the author and timestamp.
 	* The popup display then sorts and displays all messages.  Duplicates (i.e. a message having more than one label) are removed by screening for message_id.
-	* Clicking on an action (including "Open") for a message prompts an immediate check of the label that the message came from after the action has been carried out. 
+	* Clicking on an action (including "Open") for a message prompts an immediate check of the label that the message came from after the action has been carried out.
 	- To use the label-checking feature at this stage, use the command-line option -label=label,check_time_in_seconds ... you only need to set this once for each label, and the settings for that label will be stored in the prefs.  A GUI configuration tool is fully intended for the release of 1.10, but at this stage the only way to remove a label is to edit the pref file XML.
 - New feature: Ability to set and change the delay for the display of the popup dialogue.  The new version uses a default setting of 250ms, which emulates standard tooltip behaviour; however, this can be changed by using the -popup_delay=[milliseconds] command-line switch.  The old behaviour is of course emulated by -popup_delay=0.
 - Switch to XML prefs format: old ~/.checkgmail/prefs is now ~/.checkgmail/prefs.xml  Prefs reading and writing routines have also been changed.  The switch enables us (with difficulty!) to incorporate more complex constructs in the prefs - in this case, the custom delays associated with checking labels.
@@ -154,7 +155,7 @@
 - New translation: Spannish (Alvaro Arenas)
 
 (Version 1.7 - 26/2/06)
-- New feature: Support for checking multiple gmail accounts through running another instance of checkgmail with the --profile=[profile_name] CLI switch.  This uses a preferences file called prefs-[profile_name]  
+- New feature: Support for checking multiple gmail accounts through running another instance of checkgmail with the --profile=[profile_name] CLI switch.  This uses a preferences file called prefs-[profile_name]
 - BUGFIX: Program would not start for new users (tried to show preferences before translations were read!)
 
 (Version 1.6 - 22/2/06)
@@ -184,7 +185,7 @@
 - BUGFIX: regexp that checked author names now uses quoting delimiters (allows email addresses to have parentheses and other special characters)
 
 (Version 1.3 - 23/7/05)
-- New feature: "Command to execute on new mail" allows the user to specify any command that will be run when new mail is received (e.g. playing a sound)    
+- New feature: "Command to execute on new mail" allows the user to specify any command that will be run when new mail is received (e.g. playing a sound)
 - Username and password are now sent in URI escape codes, thus allowing usernames and passwords to contain non-alphanumeric characters (thanks to Leonardo Ribeiro for suggesting this)
 - "Web browser" setting in preferences now allows the use of '%u' as a substitute for the Gmail address - thus to open a new tab with the Gmail web address when left-clicking the icon, use the string "firefox -remote 'openURL(%u,new-tab)'".  (Thanks to Alvaro Arenas for suggesting this)  The setting defaults to the previous behaviour, "[command] %u", if the %u signal is not present
 - If there is no body to the email, "(no text)" is shown instead of the XML hash reference that was displayed before
