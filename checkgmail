@@ -2880,9 +2880,9 @@ sub show_prefs {
 	# Yes, I know, I know - it's getting seriously ugly, isn't it?? :)
 
 	my $dialog = Gtk2::Dialog->new ($trans{prefs}, undef,
-                                    	'destroy-with-parent',
-                                    	'gtk-ok' => 'ok',
-					'gtk-cancel' => 'cancel',
+		'destroy-with-parent',
+		'gtk-cancel' => 'cancel',
+		'gtk-ok' => 'ok',
 	);
 
 	my $hbox = Gtk2::HBox->new (0, 0);
@@ -3477,11 +3477,11 @@ sub login {
 	lock($gmail_address);
 
 	my ($title) = @_;
-    	my $dialog = Gtk2::Dialog->new ($title, undef,
-                                    	'destroy-with-parent',
-                                    	'gtk-ok' => 'ok',
-					'gtk-cancel' => 'cancel',
-			);
+	my $dialog = Gtk2::Dialog->new ($title, undef,
+		'destroy-with-parent',
+		'gtk-cancel' => 'cancel',
+		'gtk-ok' => 'ok',
+	);
 	# $dialog_login->set_default_response('ok');
 
 	my $hbox = Gtk2::HBox->new (0, 0);
@@ -3609,10 +3609,10 @@ sub generic_field_dialog {
 	my ($title,$label,$checkbox_label,$checkbox_associated_value) = @_;
 	my $field_value;
 	my $dialog = Gtk2::Dialog->new ($title, undef,
-													'destroy-with-parent',
-													'gtk-ok' => 'ok',
-													'gtk-cancel' => 'cancel',
-			);
+		'destroy-with-parent',
+		'gtk-cancel' => 'cancel',
+		'gtk-ok' => 'ok',
+	);
 	# $dialog_login->set_default_response('ok');
 
 	my $hbox = Gtk2::HBox->new (0, 0);
@@ -3720,11 +3720,11 @@ sub get_icon_file {
 	my ($pointer) =  @_;
 
 	my $icon_browser = Gtk2::FileChooserDialog->new(
-			"Select icon file ...",
-			undef,
-			'open',
-			'gtk-cancel' => 'cancel',
-			'gtk-ok' => 'ok',
+		"Select icon file ...",
+		undef,
+		'open',
+		'gtk-cancel' => 'cancel',
+		'gtk-ok' => 'ok',
 	);
 
 	my $filter = Gtk2::FileFilter->new;
