@@ -512,6 +512,7 @@ my %gmail_act = (
 	delete => 'tr',
 	star => 'st',
 	unstar => 'xst',
+	mute => 'ig',
 );
 
 # ... there's a gmail re-action :)
@@ -521,6 +522,7 @@ my %gmail_undo = (
 	spam => 'us',
 	delete => 'ib:trash',
 	star => 'xst',
+	mute => 'ib',
 );
 
 my @undo_buffer;
@@ -2286,6 +2288,27 @@ sub notify {
 			$archive_ebox->add($archive_label);
 			$hbox_opt->pack_start($archive_ebox,0,0,0);
 
+			# ---- mute
+
+			my $mute_label = Gtk2::Label->new;
+			$mute_label->set_markup(text_norm($trans{mail_mute}));
+
+			my $mute_ebox = Gtk2::EventBox->new();
+			$mute_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
+			my $s1m = $mute_ebox->signal_connect(enter_notify_event=>sub{$mute_label->set_markup(text_u($trans{mail_mute}));});
+			my $s2m = $mute_ebox->signal_connect(leave_notify_event=>sub{$mute_label->set_markup(text_norm($trans{mail_mute}));});
+			$mute_ebox->signal_connect(button_press_event=>sub{
+			    $request->enqueue(gen_action_url($gmail_act{mute},$id));
+			    $mute_label->set_markup(text_u($trans{mail_muting}));
+			    $mute_ebox->signal_handler_disconnect($s1m);
+			    $mute_ebox->signal_handler_disconnect($s2m);
+			    show_notify();
+			    @undo_buffer=([$id, $label, 'mute']);
+			    queue_check($label);
+			});
+			$mute_ebox->add($mute_label);
+			$hbox_opt->pack_start($mute_ebox,0,0,0);
+
 			# ---- report spam
 
 			my $spam_label = Gtk2::Label->new;
@@ -3931,6 +3954,8 @@ sub read_translations {
             mail_mark_all="Marca'ls tots com a llegits"
             mail_marking="Marcant com a llegit ..."
             mail_marking_all="Marcant tots com a llegits ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Obre"
             mail_report_spam="Marca'l com a correu brossa"
             mail_reporting_spam="Marcant com a correu brossa ..."
@@ -3995,6 +4020,8 @@ sub read_translations {
             mail_mark_all="Marker alle som læst"
             mail_marking="Markerer læst ..."
             mail_marking_all="Markerer alle læst ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Åbn"
             mail_report_spam="Rapporter spam"
             mail_reporting_spam="Rapporterer spam ..."
@@ -4059,6 +4086,8 @@ sub read_translations {
             mail_mark_all="Alle als gelesen markieren"
             mail_marking="Markiere als gelesen ..."
             mail_marking_all="Markiere alle als gelesen ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Öffnen"
             mail_report_spam="Spam melden"
             mail_reporting_spam="Melde Spam ..."
@@ -4125,6 +4154,8 @@ sub read_translations {
             mail_mark_all="Mark all as read"
             mail_marking="Marking read ..."
             mail_marking_all="Marking all read ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Open"
             mail_report_spam="Report spam"
             mail_reporting_spam="Reporting spam ..."
@@ -4197,6 +4228,8 @@ sub read_translations {
             mail_mark_all="Marcar todos como leído"
             mail_marking="Marcando como leído ..."
             mail_marking_all="Marcando todos com leído ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Abrir"
             mail_report_spam="Marcar como spam"
             mail_reporting_spam="Marcando como spam ..."
@@ -4264,6 +4297,8 @@ sub read_translations {
             mail_mark_all="Tout marquer comme lu"
             mail_marking="Marquage comme lu..."
             mail_marking_all="Marquage comme lu..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Ouvrir"
             mail_report_spam="Signaler comme spam"
             mail_reporting_spam="Signalisation comme spam..."
@@ -4335,6 +4370,8 @@ sub read_translations {
             mail_mark_all="Označi sve kao pročitano"
             mail_marking="Označavanje pročitanog ..."
             mail_marking_all="Označavanje svega kao pročitanog ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Otvori"
             mail_report_spam="Prijavi spam"
             mail_reporting_spam="Prijava spama ..."
@@ -4399,6 +4436,8 @@ sub read_translations {
             mail_mark_all="Segna tutti come letti"
             mail_marking="Segnalazione come letta ..."
             mail_marking_all="Marcatura tutti come letti ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Apri"
             mail_report_spam="Segnala come spam"
             mail_reporting_spam="Segnalazione come spam ..."
@@ -4463,6 +4502,8 @@ sub read_translations {
             mail_mark_all="Jelöld mindet olvasottnak"
             mail_marking="Olvasottnak jelölés ..."
             mail_marking_all="Mindet olvasottnak jelölés ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Megnyitás"
             mail_report_spam="Ez spam"
             mail_reporting_spam="Spam bejelentése ..."
@@ -4527,6 +4568,8 @@ sub read_translations {
             mail_mark_all="Markeer alles als gelezen"
             mail_marking="Markeer gelezen ..."
             mail_marking_all="Alles als gelezen markeren ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Openen"
             mail_report_spam="Aanmelden spam"
             mail_reporting_spam="Aanmelden als spam ..."
@@ -4591,6 +4634,8 @@ sub read_translations {
             mail_mark_all="Marker alle som lest"
             mail_marking="Markerer lest ..."
             mail_marking_all="Markerer alle lest ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Åpne"
             mail_report_spam="Rapporter spam"
             mail_reporting_spam="Rapporterer spam ..."
@@ -4655,6 +4700,8 @@ sub read_translations {
             mail_mark_all="Zaznacz wszystko jako przeczytane"
             mail_marking="Zaznaczam jako przeczytane ..."
             mail_marking_all="Zaznaczam wszystko jako przeczytane ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Otwórz"
             mail_report_spam="Raportuj spam"
             mail_reporting_spam="Raportuje spam ..."
@@ -4719,6 +4766,8 @@ sub read_translations {
             mail_mark_all="Marcar todas como lidas"
             mail_marking="A marcar como lida ..."
             mail_marking_all="A marcar todas como lidas..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Abrir"
             mail_report_spam="Reportar spam"
             mail_reporting_spam="A reportar spam ..."
@@ -4783,6 +4832,8 @@ sub read_translations {
             mail_mark_all="Marcar todas como lidas"
             mail_marking="Marcando como lida ..."
             mail_marking_all="Marcando todas como lidas..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Abrir"
             mail_report_spam="Reportar spam"
             mail_reporting_spam="Reportando spam ..."
@@ -4847,6 +4898,8 @@ sub read_translations {
             mail_mark_all="Marcheaza toate ca citite"
             mail_marking="Marchez ca citită ..."
             mail_marking_all="Marchez toate ca citite ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Deschide"
             mail_report_spam="Raportează ca spam"
             mail_reporting_spam="Raportez ca spam ..."
@@ -4911,6 +4964,8 @@ sub read_translations {
             mail_mark_all="Označiť všetko ako prečítané"
             mail_marking="Označuje sa ako prečítané ..."
             mail_marking_all="Označuje sa všetko ako prečítané ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Otvoriť"
             mail_report_spam="Nahlásiť spam"
             mail_reporting_spam="Nahlasuje sa spam ..."
@@ -4975,6 +5030,8 @@ sub read_translations {
             mail_mark_all="Označi vse kot prebrano"
             mail_marking="Označujem kot prebrano ..."
             mail_marking_all="Označujem vse kot prebrano ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Odpri"
             mail_report_spam="Prijavi vslijeno pošto"
             mail_reporting_spam="Poročam vsiljeno pošto ..."
@@ -5039,6 +5096,8 @@ sub read_translations {
             mail_mark_all="Merkitse kaikki luetuiksi"
             mail_marking="Merkitään luetuksi ..."
             mail_marking_all="Merkitään kaikki luetuiksi ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Avaa"
             mail_report_spam="Ilmoita roskapostista"
             mail_reporting_spam="Ilmoitetaan roskapostista ..."
@@ -5103,6 +5162,8 @@ sub read_translations {
             mail_mark_all="Markera alla som lästa"
             mail_marking="Markerar läst ..."
             mail_marking_all="Markerar alla lästa ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Öppna"
             mail_report_spam="Rapportera som spam"
             mail_reporting_spam="Rapporterar spam ..."
@@ -5168,6 +5229,8 @@ sub read_translations {
             mail_mark_all="Sve označi kao pročitano"
             mail_marking="Označavanje kao pročitanog ..."
             mail_marking_all="Označavanje svega kao pročitanog ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Otvori"
             mail_report_spam="Prijavi neželjenu poruku"
             mail_reporting_spam="Prijava neželjene poruke ..."
@@ -5232,6 +5295,8 @@ sub read_translations {
             mail_mark_all="Označ vše jako přečtené"
             mail_marking="Označuji jako přečtené ..."
             mail_marking_all="Označuji vše jako přečtené ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Otevřít"
             mail_report_spam="Nahlaš spam"
             mail_reporting_spam="Nahlašuji spam ..."
@@ -5296,6 +5361,8 @@ sub read_translations {
             mail_mark_all="Пометить все как прочитанные"
             mail_marking="Помечаю как прочитаное ..."
             mail_marking_all="Помечаю все как прочитанные ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Открыть"
             mail_report_spam="Пометить как спам"
             mail_reporting_spam="Помечаю как спам ..."
@@ -5360,6 +5427,8 @@ sub read_translations {
             mail_mark_all="அனைத்து மடல்களும் படித்ததாகக் குறி"
             mail_marking="படித்ததாகக் குறிக்கப்படுகிறது ..."
             mail_marking_all="அனைத்து மடல்களும் படித்ததாகக் குறிக்கப்படுகிறது ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="மடலினைத் திற"
             mail_report_spam="ஒவ்வாத/விளம்பர மடல்"
             mail_reporting_spam="ஒவ்வாத/விளம்பர மடலெனத் தெரிவி ..."
@@ -5424,6 +5493,8 @@ sub read_translations {
             mail_mark_all="Обележи сѐ како прочитано"
             mail_marking="Обележувам како прочитано ..."
             mail_marking_all="Обележувам сѐ како прочитано ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Отвори"
             mail_report_spam="Пријави спам"
             mail_reporting_spam="Пријавувам спам ..."
@@ -5488,6 +5559,8 @@ sub read_translations {
             mail_mark_all="Paznač usio jak pračytanaje"
             mail_marking="Zaznačaje jak pračytanaje ..."
             mail_marking_all="Zaznačaje usio jak pračytanaje ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="Adčyni"
             mail_report_spam="Rapartuj spam"
             mail_reporting_spam="Rapartuje spam ..."
@@ -5552,6 +5625,8 @@ sub read_translations {
             mail_mark_all="すべて既読にする"
             mail_marking="既読にしています ..."
             mail_marking_all="すべてを既読にしています ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="開く"
             mail_report_spam="迷惑メールを報告"
             mail_reporting_spam="迷惑メールを報告しています ..."
@@ -5616,6 +5691,8 @@ sub read_translations {
             mail_mark_all="标记邮件所有为已读"
             mail_marking="正在标记邮件为已读 ..."
             mail_marking_all="正在标记所有邮件为已读 ..."
+            mail_mute="Mute"
+            mail_muting="Muting ..."
             mail_open="打开"
             mail_report_spam="报告垃圾邮件"
             mail_reporting_spam="正在报告垃圾邮件 ..."
