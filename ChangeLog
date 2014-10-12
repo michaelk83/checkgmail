@@ -6,6 +6,7 @@
 - applied 2 factor + kwallet patches from romainguinot, see https://gist.github.com/romainguinot/5065977
 - applied use LWP Protocol https patch
 - fix outdated action urls
+- added icon for downstream desktop files
 
 (Version 1.13 - 19/1/08)
 - New Feature: -update command-line switch will download the latest version of the program from SVN and show the user a diff between the two versions, before asking the user if they want to upgrade.  This feature will hopefully be improved in newer versions (at the moment there is no version tracking or checking routinely for updates).
