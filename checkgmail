@@ -2514,9 +2514,7 @@ sub get_screen {
 	# support multiple monitors (thanks to Philip Jagielski for this simple solution!)
 	my $width;
 	unless ($disable_monitors_check) {
-		for my $i (0 .. $monitor) {
-			$width += $eventbox->get_screen->get_monitor_geometry($i)->width;
-		}
+		$width = $eventbox->get_screen->get_width();
 	} else {
 		$width = $eventbox->get_screen->get_monitor_geometry($monitor)->width;
 	}
