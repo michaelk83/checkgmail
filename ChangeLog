@@ -9,6 +9,7 @@
 - added icon for downstream desktop files
 - get rid of libsexy for urls in mails, see http://sourceforge.net/p/checkgmail/patches/16/
 - multiple monitors check fix, see http://sourceforge.net/p/checkgmail/patches/15/
+- spanish and swedish translation updates, see http://sourceforge.net/p/checkgmail/patches/14/ and http://sourceforge.net/p/checkgmail/patches/13/
 
 (Version 1.13 - 19/1/08)
 - New Feature: -update command-line switch will download the latest version of the program from SVN and show the user a diff between the two versions, before asking the user if they want to upgrade.  This feature will hopefully be improved in newer versions (at the moment there is no version tracking or checking routinely for updates).
