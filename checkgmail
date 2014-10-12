@@ -230,7 +230,7 @@ BEGIN {
 	use LWP::UserAgent;
 	# use LWP::Debug qw(+);
 	use HTTP::Request::Common;
-	use Crypt::SSLeay;
+	use LWP::Protocol::https;
 	")) {&$eval_sub($_)};
 	if ($failed_packages) {
 		unless ($failed_packages =~ /Gtk2\s/) {
