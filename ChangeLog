@@ -8,7 +8,7 @@
 - fix outdated action urls
 - added icon for downstream desktop files
 - get rid of libsexy for urls in mails, see http://sourceforge.net/p/checkgmail/patches/16/
-- multiple monitors check fix, see http://sourceforge.net/p/checkgmail/patches/15/
+- multiple monitors check fix, see http://sourceforge.net/p/checkgmail/patches/15/ (reverted, does not work for me)
 - spanish and swedish translation updates, see http://sourceforge.net/p/checkgmail/patches/14/ and http://sourceforge.net/p/checkgmail/patches/13/
 - mute feature, see http://sourceforge.net/p/checkgmail/patches/11/
 - change button order to be consistent, see http://sourceforge.net/p/checkgmail/patches/4/
