@@ -156,7 +156,7 @@ BEGIN {
 	# and now also the root partition UUID, if it exists.
 
 	# The intent of the original design is not changed, i.e. this only protects remote/offline copies of the prefs file,
-   # but does not protect against compromised access to the machine checkgmail is running on.
+	# but does not protect against compromised access to the machine checkgmail is running on.
 	# Instead of building/maintaining within checkgmail a passphrase unlocking mechanism, with length/pattern/strength constraints,
 	# it would make more sense to write integrations with other pwd mgt tools, as required, if KWallet is not used.
 
@@ -166,7 +166,17 @@ BEGIN {
 
 	my $field_separator='-';
 
-	my $running_interfaces_macs=`ifconfig | grep -A4 RUNNING | grep ether | awk '{print \$2}' | xargs`;
+	my $running_interfaces_macs="";
+	if (-e '/bin/ifconfig') {
+		$running_interfaces_macs=`ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | head -1`;
+	}
+	elsif (-e '/bin/ip') {
+		$running_interfaces_macs=`ip addr | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | grep -v 00:00:00:00:00:00 | grep -v ff:ff:ff:ff:ff:ff | head -1`;
+	}
+	else {
+		print "could not get MAC address\n"
+	}
+
 	chomp $running_interfaces_macs;
 
 	# using serial numbers from dmidecode would be nice, but reading them requires root access...
