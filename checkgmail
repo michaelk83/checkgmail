@@ -2196,7 +2196,7 @@ sub notify {
 
 		# From: line (with star)
 		my $from_l = Gtk2::Label->new;
-		$from_l->set_markup("<b>$trans{notify_from}</b> $author");
+		$from_l->set_markup("<span foreground=\"#666\">$trans{notify_from}</span> $author");
 		$from_l->set_line_wrap(1);
 
 		$hbox_from->pack_start($from_l,0,0,0);
