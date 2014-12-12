@@ -107,7 +107,7 @@ BEGIN {
 
 			(/v$/ || /verbose/) && do {
 				$silent = 0;
-				print "CheckGmail v$version\nCopyright Â© 2005-7 Owen Marshall\n\n";
+				print "CheckGmail v$version\nCopyright © 2005-7 Owen Marshall\n\n";
 				last };
 
 			/nocrypt/ && do {
@@ -3954,7 +3954,7 @@ sub URI_unescape {
 
 sub read_translations {
 	my $default_translations = <<EOF;
-<opt Version="1.12">
+<opt Version="1.13">
   <Language name="Català"
             login_err="Error: Nom d'usuari o contrassenya incorrecte"
             login_title="Entrant a Gmail ..."
@@ -4090,6 +4090,8 @@ sub read_translations {
   <Language name="Deutsch"
             login_err="Fehler: Falsches Login oder Passwort"
             login_title="Google-Mail Login ..."
+            two_factor_main_google_password="Primärpasswort"
+            two_factor_main_google_password_app_label="Anwendung"
             mail_archive="Archivieren"
             mail_archiving="Archiviere ..."
             mail_delete="Löschen"
@@ -4098,8 +4100,8 @@ sub read_translations {
             mail_mark_all="Alle als gelesen markieren"
             mail_marking="Markiere als gelesen ..."
             mail_marking_all="Markiere alle als gelesen ..."
-            mail_mute="Mute"
-            mail_muting="Muting ..."
+            mail_mute="Stumm"
+            mail_muting="Schalte stumm ..."
             mail_open="Öffnen"
             mail_report_spam="Spam melden"
             mail_reporting_spam="Melde Spam ..."
@@ -4146,6 +4148,13 @@ sub read_translations {
             prefs_login_save_kwallet="in der KDE-Wallet"
             prefs_login_save_plain="unverschlüsselt"
             prefs_login_user="_Login"
+            prefs_two_factor="Zwei-Faktor-Authentifizierung"
+            prefs_two_factor_main_google_password="Google Primärpasswort"
+            prefs_two_factor_save_trust_cookie="Gerät vertrauen / zugehörigen Cookie speichern"
+            prefs_two_factor_enable="Aktivieren"
+            prefs_two_factor_save_main_google_password="Primärpasswort speichern"
+            prefs_two_factor_verification_code="Verifizierungscode"
+            prefs_two_factor_pin="PIN"
             prefs_tray="Systemabschnitt der Kontrollleiste"
             prefs_tray_bg="Hintergrundfarbe ..."
             prefs_tray_error_icon="Benutze eigenes Icon für Fehler"
