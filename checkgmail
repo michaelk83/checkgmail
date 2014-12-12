@@ -458,7 +458,8 @@ my $gmail_web_address = "https://mail.google.com/mail/u/0";
 $gmail_address = gen_prefix_url()."/feed/atom";
 #$gmail_address = $hosted ? "mail.google.com/a/$hosted/feed/atom" : "mail.google.com/mail/u/0/feed/atom";
 
-my $prefs_dir = "$HOME/.checkgmail";
+my $prefs_dir_old = "$HOME/.checkgmail";
+my $prefs_dir = "$HOME/.config/checkgmail";
 $icons_dir = "$prefs_dir/attachment_icons";
 my $prefs_file_nonxml = "$prefs_dir/prefs$profile";
 my $prefs_file = "$prefs_file_nonxml.xml";
@@ -495,21 +496,21 @@ my $status_label;
 # global stuff initialised, starting child process...
 
 print "Parent: Checking the existence of ~/.checkgmail ...\n" if $debug;
-# Create the default .checkgmail directory and migrate prefs from users of older versions
-unless (-d $prefs_dir) {
-	if (-e "$prefs_dir") {
-		print "Moving ~/.checkgmail to ~/.checkgmail/prefs ...\n\n";
-		rename("$HOME/.checkgmail", "$HOME/.checkgmailbak");
-		mkdir($prefs_dir, 0777);
-		rename("$HOME/.checkgmailbak", "$prefs_dir/prefs");
-	} else {
-		# User hasn't run an old version, just create the dir
-		mkdir($prefs_dir, 0700);
-	}
+if (! -d $prefs_dir && -d $prefs_dir_old) {
+    # move old config dir to new place
+    print "Moving $prefs_dir_old to $prefs_dir ...\n\n";
+    rename($prefs_dir_old, $prefs_dir_old . "bak");
+    mkdir($prefs_dir, 0775);
+    rename($prefs_dir_old . "bak", $prefs_dir);
+} elsif (! -d $prefs_dir) {
+    # create new config dir
+    print "Creating new $prefs_dir ...\n\n";
+    mkdir($prefs_dir, 0775);
 }
 
 unless (-d $icons_dir) {
-	mkdir($icons_dir, 0700);
+    print "Creating new $icons_dir ...\n\n";
+    mkdir($icons_dir, 0775);
 }
 
 
