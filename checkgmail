@@ -2113,13 +2113,13 @@ sub notify {
 
 
 		my $title_l = Gtk2::Label->new;
-		$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>");
+		$title_l->set_markup("<span foreground=\"#000000\"><b>$title</b></span><small> <span foreground=\"#006633\">$label</span></small>");
 		$title_l->set_line_wrap(1);
 
 		my $title_l_ebox = Gtk2::EventBox->new();
 		$title_l_ebox->modify_bg('normal', Gtk2::Gdk::Color->new (65000, 65000, 65000));
-		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u><i>$title</i></u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
-		my $s2 = $title_l_ebox->signal_connect(leave_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
+		my $s1 = $title_l_ebox->signal_connect(enter_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b><u>$title</u></b></span><small> <span foreground=\"#006633\">$label</span></small>")});
+		my $s2 = $title_l_ebox->signal_connect(leave_notify_event=>sub{$title_l->set_markup("<span foreground=\"#000000\"><b>$title</b></span><small> <span foreground=\"#006633\">$label</span></small>")});
 		$title_l_ebox->signal_connect(button_press_event=>sub{
 			# grabbing the full text of a message
 			return unless $cookies;
