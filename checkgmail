@@ -33,7 +33,7 @@ use strict;
 
 # global variables (can't be set global in the BEGIN block)
 my ($version, $silent, $nocrypt, $profile, $disable_monitors_check,
-		$private, $cookies, $two_factor_auth_switch, $popup_size, $hosted_tmp, $show_popup_delay,
+		$private, $cookies, $two_factor_auth_switch, $popup_size, $hosted, $show_popup_delay,
 		$popup_persistence, $use_kwallet, $nologin, $mailno, $debug);
 
 # global name of the 3rd party CLI binary used to access kwallet (if kwallet integration is used).
@@ -43,6 +43,7 @@ BEGIN {
 	$version = "1.14pre2-svn+two_factor+support+improved_kwallet_integration";
 	$silent = 1;
 	$profile = "";
+	$hosted = 0;
 	$cookies = 1;
 	$two_factor_auth_switch = 0; # command-line switch, default off.
 	$nologin = 1;
@@ -90,7 +91,7 @@ BEGIN {
 				# last };
 
 			/hosted=(.*)/ && do {
-				$hosted_tmp = $1;
+				$hosted = $1;
 				last };
 
 			/popup_delay=(\d+)/ && do {
@@ -326,7 +327,6 @@ EOF
 
 # Shared variables between threads
 # - need to be declared here, unfortunately ... can't do it in the prefs hash :(
-my $gmail_address : shared;
 my $user : shared;
 my $passwd : shared;
 
@@ -373,7 +373,6 @@ my $gmail_smsv_expiration_date : shared;
 my $delay : shared;
 my %label_delay : shared;
 # my @labels : shared;
-my $hosted : shared = $hosted_tmp;
 
 # URI escape codes to allow non alphanumeric usernames & passwords ...
 # thanks to Leonardo Ribeiro for suggesting this, and to the lcwa package for this implementation
@@ -416,11 +415,9 @@ my %pref_variables = (
 	web_passwd => \$web_passwd,
 	two_factor_trust_cookie => \$two_factor_trust_cookie,
 	use_two_factor_auth => \$use_two_factor_auth_pref,
-	hosted => \$hosted,
 	save_passwd => \$save_passwd,
 	save_web_passwd => \$save_web_passwd,
 	save_two_factor_trust_cookie => \$save_two_factor_trust_cookie,
-	atomfeed_address => \$gmail_address,
 	language => \$language,
 	delay => \$delay,
 	label_delay => \%label_delay,
@@ -454,9 +451,8 @@ $language = 'English';
 
 # Global variables
 $HOME = (getpwuid($<))[7];
-my $gmail_web_address = "https://mail.google.com/mail/u/0";
-$gmail_address = gen_prefix_url()."/feed/atom";
-#$gmail_address = $hosted ? "mail.google.com/a/$hosted/feed/atom" : "mail.google.com/mail/u/0/feed/atom";
+my $gmail_base_url = $hosted ? "https://mail.google.com/a/$hosted/" : "https://mail.google.com/mail/u/0/";
+my $gmail_feed = $gmail_base_url . "feed/atom";
 
 my $prefs_dir_old = "$HOME/.checkgmail";
 my $prefs_dir = "$HOME/.config/checkgmail";
@@ -741,7 +737,7 @@ sub exit_prog {
 
 	# if ($cookies) {
 		# $http_status->enqueue("Logging out ...");
-		# $request->enqueue("LOGOUT:mail.google.com/mail/u/0/?logout");
+		# $request->enqueue("LOGOUT:$gmail_base_url?logout");
 		# sleep 1;
 	# }
 
@@ -876,7 +872,7 @@ sub queue_check {
 	# Simply adds to the $request queue to signal the http_check thread
 	my ($label) = shift;
 	$label = $label ? "$label" : "";
-	$request->enqueue("GET:$gmail_address $label");
+	$request->enqueue("GET:$gmail_feed $label");
 	return 1;
 }
 
@@ -946,7 +942,7 @@ sub http_check {
 			# deciphering the login form! :)
 
 			# now using the same call for both hosted and non-hosted accounts. the small differences between the two will be handled there.
-			$error = http_get("Email=$URI_user&Passwd=$URI_passwd", "LOGIN");
+			$error = http_action("Email=$URI_user&Passwd=$URI_passwd", "LOGIN");
 
 			$cookie_jar->scan(\&scan_at);
 
@@ -1011,7 +1007,11 @@ sub http_check {
 				print "http_check : cookies are used, and two factor is not used, therefore logon_string not required for the atom feed...\n" unless $silent;
 		}
 
-		$request_results->enqueue(http_get("https://$logon_string$address_real", $method, $label));
+		# add http basic auth credentials to URL
+		my $find = "https://";
+		my $replace = "https://" . $logon_string;
+		$address_real =~ s/$find/$replace/g;
+		$request_results->enqueue(http_action($address_real, $method, $label));
 
 	}
 }
@@ -1054,13 +1054,16 @@ sub scan_at {
 }
 
 
-sub http_get {
+sub http_action {
 	# this is now called from the http-checking thread
 	# - all GUI activities are handled through queues
 	my ($address, $method, $label) = @_;
 	$label = "/$label" if $label;
 	$label||="";
 	my $error;
+
+	# debug http_action, beware this exposes login credentials!
+	print "http_action : address : '$address' method  '$method' label: '$label'\n" unless $silent;
 
 	if ($method eq 'POST') {
 		# quick hack to use the POST method for Gmail actions ...
@@ -1096,7 +1099,7 @@ sub http_get {
 		# Well, we did get a URL here, but it doesn't make any sense to send both LOGIN and the URL to this function.
 		# So, this URL is just the username and password addition.
 
-		print "http_get : entering LOGIN...\n" unless $silent;
+		print "http_action : entering LOGIN...\n" unless $silent;
 
 		# start address
 	  ###############
@@ -1130,7 +1133,7 @@ sub http_get {
 		my $galx = URI_unescape($1);
 		$post_galx = URI_escape($galx);
 
-		print "http_get : got GALX : '$post_galx'\n" unless $silent;
+		print "http_action : got GALX : '$post_galx'\n" unless $silent;
 
 		# post authentication data
 	  ##########################
@@ -1143,15 +1146,7 @@ sub http_get {
 
 		# central location to POST authentication data. works with non-hosted and hosted accounts.
 		$post_data_address="https://accounts.google.com/ServiceLoginAuth?service=mail";
-
-		# go to a different address if using a hosted account or not...
-		if (!$hosted) {
-			$continue_address="https://mail.google.com/mail/u/0/";
-		} else {
-			$continue_address="https://mail.google.com/a/$hosted/";
-		}
-
-		$post_data = "ltmpl=default&ltmplcache=2&continue=$continue_address?ui=html&service=mail&rm=false&scc=1&GALX=$post_galx&$address&PersistentCookie=yes&rmShown=1&signIn=Sign+in&asts=";
+		$post_data = "ltmpl=default&ltmplcache=2&continue=$gmail_base_url?ui=html&service=mail&rm=false&scc=1&GALX=$post_galx&$address&PersistentCookie=yes&rmShown=1&signIn=Sign+in&asts=";
 		# be aware that $address is badly named, as it may actually be the username/password couple...
 
 		# Hide personal data from verbose display
@@ -1159,7 +1154,7 @@ sub http_get {
 		$post_display =~ s/Email=(.*?)&/Email=******&/;
 		$post_display =~ s/Passwd=(.*?)&/Passwd=******&/;
 
-		print "http_get : Logging in with post data $post_display\n" unless $silent;
+		print "http_action : Logging in with post data $post_display\n" unless $silent;
 
 		# Send the login post data to the login URL
 		#my $post_req = HTTP::Request->new('POST' => "https://accounts.google.com/ServiceLoginAuth?service=mail");
@@ -1210,7 +1205,7 @@ sub http_get {
 		if ($use_two_factor_auth) {
 
 			# first attempt to access gmail, needed to trigger the validation check
-			my $initial_target_req = HTTP::Request->new('GET' => "https://mail.google.com/mail/u/0/?shva=1");
+			my $initial_target_req = HTTP::Request->new('GET' => "$gmail_base_url?shva=1");
 
 			my $initial_target_response = $ua->request($initial_target_req);
 				if ($initial_target_response->is_error) {
@@ -1221,7 +1216,7 @@ sub http_get {
 			my $initial_target_response_content = $initial_target_response->content;
 
 			if (!$save_two_factor_trust_cookie || ($save_two_factor_trust_cookie && !$two_factor_trust_cookie_decrypt)) {
-				print "http_get : two_factor : getting smsToken value..." unless $silent;
+				print "http_action : two_factor : getting smsToken value..." unless $silent;
 
 				# store the CSRF tokens for later use (during the 2 factor authentication PIN code POST)
 				my ($csrf_timeStmp) = ($initial_login_post_response_content  =~ m/id="timeStmp"\s+value='(.*?)'/ismg);
@@ -1248,7 +1243,7 @@ sub http_get {
 			$post_req->header('Cookie' => "GALX=$galx");
 
 			if ($save_two_factor_trust_cookie && $two_factor_trust_cookie_decrypt) {
-				print "http_get : adding SMSV cookie to bypass PIN code...\n" unless $silent;
+				print "http_action : adding SMSV cookie to bypass PIN code...\n" unless $silent;
 				$post_req->header('Cookie' => "SMSV=$two_factor_trust_cookie_decrypt");
 			}
 
@@ -1265,10 +1260,10 @@ sub http_get {
 		# now go to the web UI
 	  ##########################
 
-		print "http_get : accessing gmail...\n" unless $silent;
+		print "http_action : accessing gmail...\n" unless $silent;
 		# Last part of the login process, in order to get Gmail's globar variables
 		# (including the all-important ik parameter)
-		my $target_req = HTTP::Request->new('GET' => "https://mail.google.com/mail/u/0/?shva=1");
+		my $target_req = HTTP::Request->new('GET' => "$gmail_base_url?shva=1");
 
 		my $target_response = $ua->request($target_req);
 			if ($target_response->is_error) {
@@ -1728,7 +1723,7 @@ sub clean_text_body {
 sub open_gmail {
 	# a routine to open Gmail in a web browser ... or not, as the user prefers!
 	my $command = $gmail_command;
-	my $login_address = get_login_href($gmail_web_address);
+	my $login_address = get_login_href($gmail_base_url);
 	run_command($command, $login_address);
 }
 
@@ -1773,7 +1768,6 @@ sub read_prefs {
 		lock($save_passwd);
 		lock($save_web_passwd);
 		lock($save_two_factor_trust_cookie);
-		lock($gmail_address);
 		lock($use_two_factor_auth_pref);
 
 		while (<PREFS>) {
@@ -1799,7 +1793,6 @@ sub read_prefs {
 		lock($save_passwd);
 		lock($save_web_passwd);
 		lock($save_two_factor_trust_cookie);
-		lock($gmail_address);
 		lock($use_two_factor_auth_pref);
 
 		my $prefs_xml = XMLin($prefs, ForceArray => 1);
@@ -1846,7 +1839,6 @@ sub write_prefs {
 	lock($save_passwd);
 	lock($save_web_passwd);
 	lock($save_two_factor_trust_cookie);
-	lock($gmail_address);
 	lock($use_two_factor_auth_pref);
 
 	convert_labels_from_array();
@@ -2078,11 +2070,11 @@ sub notify {
 			unless ($mb) {
 				# print "Message ID = $id\n";
 				# yep, here's the magic code.  This accesses the datapack, which we read with a little hack in the check routine ...
-				#$request->enqueue("GET:".gen_prefix_url()."/?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
+				#$request->enqueue("GET:$gmail_base_url?ui=1&view=cv&search=all&th=$id&qt=&prf=1&pft=undefined&rq=xm&at=$gmail_at");
 
 				# As of 3/11/10, Gmail has removed access to the old ui=1 version of Gmail
 				# ui=2 requires a POST command to get the datapack (which has also changed formats slightly)
-				$request->enqueue("POST_MB:".gen_prefix_url()."/?ui=2&ik=$gmail_ik&rid=&view=cv&prf=1&_reqid=&nsc=1|&mb=0&rt=j&cat=all&search=cat&th=$id&at=$gmail_at");
+				$request->enqueue("POST_MB:$gmail_base_url?ui=2&ik=$gmail_ik&rid=&view=cv&prf=1&_reqid=&nsc=1|&mb=0&rt=j&cat=all&search=cat&th=$id&at=$gmail_at");
 			} else {
 				# this allows the message text to be toggled ...
 				# oh yes, we're all about usability here, folks! :)
@@ -2448,24 +2440,8 @@ sub gen_action_url {
 	($act, $search) = split(":",$act);
 	$search ||= 'all';
 
-	my $prefix = gen_prefix_url();
-	return ("POST:$prefix/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1&rt=j");
-
-	# if ($hosted) {
-		# return ("POST:mail.google.com/a/$hosted/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
-	# } else {
-		# return ("POST:mail.google.com/mail/u/0/?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1");
-	# }
+	return ("POST:$gmail_base_url?&ik=&search=$search&view=tl&start=0|&act=$act&at=$gmail_at&vp=&msq=&ba=false&t=$id&fs=1&rt=j");
 }
-
-sub gen_prefix_url {
-	if ($hosted) {
-		return ("mail.google.com/a/$hosted");
-	} else {
-		return ("mail.google.com/mail/u/0");
-	}
-}
-
 
 sub undo_last {
 	# Undo last Gmail action ...
@@ -2788,7 +2764,7 @@ sub pack_menu {
 	my $menu_compose = Gtk2::ImageMenuItem->new($trans{menu_compose});
 	$menu_compose->set_image(Gtk2::Image->new_from_pixbuf(load_pixbuf($compose_mail_data)));
 	$menu_compose->signal_connect('activate',sub {
-		run_command($gmail_command, get_login_href("https://mail.google.com/mail/u/0/??view=cm&tf=0#compose"));
+		run_command($gmail_command, get_login_href("$gmail_base_url?view=cm&tf=0#compose"));
 	});
 
 	my $menu_prefs = Gtk2::ImageMenuItem->new($trans{menu_prefs});
@@ -3175,19 +3151,6 @@ sub show_prefs {
 
 			$vbox_check->pack_start (Gtk2::HSeparator->new, 0, 0, 4);
 
-			my $hbox_atom = Gtk2::HBox->new (0,0);
-			$vbox_check->pack_start($hbox_atom,1,1,2);
-
-				my $atom_label = Gtk2::Label->new_with_mnemonic($trans{prefs_check_atom});
-				$hbox_atom->pack_start($atom_label,0,0,2);
-
-				my $atom_entry = Gtk2::Entry->new();
-				$atom_entry->set_width_chars(14);
-				$atom_entry->set_text($gmail_address);
-				$hbox_atom->pack_end($atom_entry,1,1,2);
-
-
-
 			# Thanks to Rune Maagensen for adding the 24 hour clock button ...
 			my $button_24h = Gtk2::CheckButton->new_with_label($trans{prefs_check_24_hour});
 			$vbox_check->pack_start($button_24h, 0, 0, 2);
@@ -3354,7 +3317,6 @@ sub show_prefs {
 
 		$delay = ($entry_delay->get_text)*1000;
 		$popup_delay = ($entry_pdelay->get_text)*1000;
-		$gmail_address = $atom_entry->get_text;
 		$gmail_command = $exe_entry->get_text;
 		$notify_command	= $entry_notify->get_text;
 		$nomail_command	= $entry_notify_none->get_text;
@@ -3436,7 +3398,6 @@ sub login {
 	lock($user);
 	lock($passwd);
 	lock($save_passwd);
-	lock($gmail_address);
 
 	my ($title) = @_;
 	my $dialog = Gtk2::Dialog->new ($title, undef,
@@ -3944,7 +3905,6 @@ sub read_translations {
 		prefs_check="Comprovació de missatges"
 		prefs_check_24_hour="rellotje de 24 hores"
 		prefs_check_archive="Arxiu també marca'l com a llegit"
-		prefs_check_atom="Adreça de l'alimentador"
 		prefs_check_delay="Verifica nous missatges a la safata d'entrada cada"
 		prefs_check_delay2="segs"
 		prefs_check_labels="També verifica les següents etiquetes:"
@@ -4011,7 +3971,6 @@ sub read_translations {
 		prefs_check="Se efter ny post"
 		prefs_check_24_hour="24 timers ur"
 		prefs_check_archive="Arkivér markerer også læst"
-		prefs_check_atom="Feed adresse"
 		prefs_check_delay="Se efter ny post i Inbox hver "
 		prefs_check_delay2=" sekunder"
 		prefs_check_labels="Se også efter følgende mærker:"
@@ -4087,7 +4046,6 @@ sub read_translations {
 		prefs_check="Nachrichtenabfrage"
 		prefs_check_24_hour="24 Stunden-Uhr"
 		prefs_check_archive="Beim Archivieren als gelesen markieren"
-		prefs_check_atom="Feed Adresse:"
 		prefs_check_delay="Frage Nachrichten alle "
 		prefs_check_delay2=" Sekunden ab"
 		prefs_check_labels="Auch die folgenden Labels abfragen:"
@@ -4163,7 +4121,6 @@ sub read_translations {
 		prefs_check="Mail checking"
 		prefs_check_24_hour="24 hour clock"
 		prefs_check_archive="Archive also marks as read"
-		prefs_check_atom="Feed address"
 		prefs_check_delay="Check Inbox for mail every "
 		prefs_check_delay2=" secs"
 		prefs_check_labels="Also check the following labels:"
@@ -4237,7 +4194,6 @@ sub read_translations {
 		prefs_check="Verificación de correo"
 		prefs_check_24_hour="Reloj de 24 horas"
 		prefs_check_archive="Archivar también marca como leído"
-		prefs_check_atom="Dirección del alimentador (feed)"
 		prefs_check_delay="Revisar la bandeja de entrada cada "
 		prefs_check_delay2=" segs"
 		prefs_check_labels="También verificar las siguientes etiquetas:"
@@ -4313,7 +4269,6 @@ sub read_translations {
 		prefs_check="Vérification des messages"
 		prefs_check_24_hour="Format horaire 24h "
 		prefs_check_archive="Archives marquées comme lues"
-		prefs_check_atom="Adresse de flux"
 		prefs_check_delay="Vérification toutes les "
 		prefs_check_delay2=" secs"
 		prefs_check_labels="Also check the following labels:"
@@ -4387,7 +4342,6 @@ sub read_translations {
 		prefs_check="Provjera maila"
 		prefs_check_24_hour="24-satni oblik"
 		prefs_check_archive="Označi arhiv pročitanim"
-		prefs_check_atom="Adresa feeda"
 		prefs_check_delay="Provjeri dolaznu poštu svakih "
 		prefs_check_delay2=" sekundi"
 		prefs_check_labels="Provjeri i ove etikete:"
@@ -4461,7 +4415,6 @@ sub read_translations {
 		prefs_check="Controllo delle mail"
 		prefs_check_24_hour="Orologio a 24 ore"
 		prefs_check_archive="Archivia marca anche come letto"
-		prefs_check_atom="Indirizzo dei feed"
 		prefs_check_delay="Controlla la Inbox per tutte le mail "
 		prefs_check_delay2=" secondi"
 		prefs_check_labels="Controlla anche le seguenti etichette:"
@@ -4535,7 +4488,6 @@ sub read_translations {
 		prefs_check="Levelek ellenőrzése"
 		prefs_check_24_hour="24 órás formátum"
 		prefs_check_archive="Archiválás olvasottként is jelöl"
-		prefs_check_atom="Feed cím"
 		prefs_check_delay="Postaláda ellenőrzése minden "
 		prefs_check_delay2=" másodpercben"
 		prefs_check_labels="Az alábbi címkék ellenőrzése:"
@@ -4609,7 +4561,6 @@ sub read_translations {
 		prefs_check="Controle Post"
 		prefs_check_24_hour="24 klok type"
 		prefs_check_archive="Archief ook als gelezen markeren"
-		prefs_check_atom="Feed adres"
 		prefs_check_delay="Controleer postvak elke "
 		prefs_check_delay2=" seconden"
 		prefs_check_labels="Controleer de volgende accounts:"
@@ -4683,7 +4634,6 @@ sub read_translations {
 		prefs_check="Se etter ny e-post"
 		prefs_check_24_hour="24 timers ur"
 		prefs_check_archive="Arkivér markerer også lest"
-		prefs_check_atom="Feed adresse"
 		prefs_check_delay="Se etter ny e-post hver "
 		prefs_check_delay2=" sekunder"
 		prefs_check_labels="Sjekk også følgende merker:"
@@ -4757,7 +4707,6 @@ sub read_translations {
 		prefs_check="Sprawdzanie poczty"
 		prefs_check_24_hour="zegar 24-o godzinny"
 		prefs_check_archive="Archiwizując oznacz również jako przeczytane"
-		prefs_check_atom="Adres "
 		prefs_check_delay="Sprawdzaj pocztę co "
 		prefs_check_delay2=" sekund"
 		prefs_check_labels="Sprawdź też etykiety:"
@@ -4831,7 +4780,6 @@ sub read_translations {
 		prefs_check="Verificação do Correio"
 		prefs_check_24_hour="24"
 		prefs_check_archive="Arquivo também marca como lido"
-		prefs_check_atom="Endereço feed"
 		prefs_check_delay="Verificar Caixa de Entrada por mensagens a cada "
 		prefs_check_delay2=" segs"
 		prefs_check_labels="Verificar também as seguintes etiquetas:"
@@ -4905,7 +4853,6 @@ sub read_translations {
 		prefs_check="Verificação do Correio"
 		prefs_check_24_hour="Utilizar padrão de relógio 24h"
 		prefs_check_archive="Quando arquivar, também marcar como lido"
-		prefs_check_atom="Endereço feed"
 		prefs_check_delay="Verificar por novas mensagens a cada "
 		prefs_check_delay2=" segs"
 		prefs_check_labels="Selecione também as seguintes etiquetas:"
@@ -4979,7 +4926,6 @@ sub read_translations {
 		prefs_check="Verific mailul"
 		prefs_check_24_hour="Afişare ceas în format 24 ore"
 		prefs_check_archive="Marchează şi Arhiva ca citită"
-		prefs_check_atom="Adresă feed "
 		prefs_check_delay="Verifică Căsuţa Poştală la fiecare "
 		prefs_check_delay2=" secunde"
 		prefs_check_labels="Deasemenea verifică şi următoarele etichete:"
@@ -5053,7 +4999,6 @@ sub read_translations {
 		prefs_check="Kontrola pošty"
 		prefs_check_24_hour="24-hodinový čas"
 		prefs_check_archive="Archivovanie označí ako prečítané"
-		prefs_check_atom="Adresa zdroja"
 		prefs_check_delay="Kontrola schránky každých "
 		prefs_check_delay2=" s"
 		prefs_check_labels="Skontrolovať aj tieto zdroje:"
@@ -5127,7 +5072,6 @@ sub read_translations {
 		prefs_check="Preverjanje pošte"
 		prefs_check_24_hour="24 urni čas"
 		prefs_check_archive="Arhiviraj označi kot prebrano"
-		prefs_check_atom="Naslov informacij"
 		prefs_check_delay="Preveri pošto vsakih "
 		prefs_check_delay2=" sekund"
 		prefs_check_labels="Also check the following labels:"
@@ -5201,7 +5145,6 @@ sub read_translations {
 		prefs_check="Postin tarkistus"
 		prefs_check_24_hour="24-tuntinen kello"
 		prefs_check_archive="Arkistoiminen merkitsee luetuksi"
-		prefs_check_atom="Syötteen osoite"
 		prefs_check_delay="Tarkista posti "
 		prefs_check_delay2=" sekunnin välein"
 		prefs_check_labels="Also check the following labels:"
@@ -5277,7 +5220,6 @@ sub read_translations {
 		prefs_check="Kolla efter nya mail"
 		prefs_check_24_hour="24-timmarsklocka"
 		prefs_check_archive="Arkivering markerar även som läst"
-		prefs_check_atom="Feed-adress"
 		prefs_check_delay="Kontrollera mail var "
 		prefs_check_delay2=" sekund"
 		prefs_check_labels="Kontrollera även följande etiketter:"
@@ -5351,7 +5293,6 @@ sub read_translations {
 		prefs_check="Provjera pošte"
 		prefs_check_24_hour="24-satni oblik"
 		prefs_check_archive="Označi i arhiv pročitanim"
-		prefs_check_atom="Adresa feeda"
 		prefs_check_delay="Provjeri pristiglu poštu svakih "
 		prefs_check_delay2=" sek"
 		prefs_check_labels="Provjeri i sljedeće oznake:"
@@ -5425,7 +5366,6 @@ sub read_translations {
 		prefs_check="Kontrolování pošty"
 		prefs_check_24_hour="24-hodinový formát"
 		prefs_check_archive="Při archivaci označ jako přečtené"
-		prefs_check_atom="Adresa zdroje"
 		prefs_check_delay="Kontroluj poštu každých "
 		prefs_check_delay2=" vteřin"
 		prefs_check_labels="Kontroluj také štítky:"
@@ -5499,7 +5439,6 @@ sub read_translations {
 		prefs_check="Проверка сообщений"
 		prefs_check_24_hour="24-х часовой формат"
 		prefs_check_archive="При архивировании пометить как прочитанное"
-		prefs_check_atom="Feed адрес:"
 		prefs_check_delay="Проверять сообщения каждые "
 		prefs_check_delay2=" секунд"
 		prefs_check_labels="Также проверять следующие ярлыки:"
@@ -5573,7 +5512,6 @@ sub read_translations {
 		prefs_check="மடலின் வரவு பார்க்கப்படுகிறது"
 		prefs_check_24_hour="24 மணிநேரக் கடிகாரம்"
 		prefs_check_archive="பேழையிலிட்டுப் படித்ததாகக் குறி"
-		prefs_check_atom="ஆட்டோம் அல்லது ஈட்டு முகவரி"
 		prefs_check_delay="அஞ்சல் பெட்டியை "
 		prefs_check_delay2=" நொடிகளுக்கொருமுறை பார்"
 		prefs_check_labels="கீழ்க்கண்டக் குறிகளிடப்பட்ட மடல்கள் உள்ளனவா எனப் பார்:"
@@ -5647,7 +5585,6 @@ sub read_translations {
 		prefs_check="Проверување пошта"
 		prefs_check_24_hour="24 часа"
 		prefs_check_archive="Архивирај, исто така обележи како прочитано"
-		prefs_check_atom="Адреса на каналот"
 		prefs_check_delay="Провери го сандачето за пошта секои "
 		prefs_check_delay2=" секунди"
 		prefs_check_labels="Исто така провери ги следниве ознаки:"
@@ -5721,7 +5658,6 @@ sub read_translations {
 		prefs_check="Pravierka pošty"
 		prefs_check_24_hour="24-hadzinny hadzińnik"
 		prefs_check_archive="Aarchivizujučy paznač taksama jak pračytanaje"
-		prefs_check_atom="Adras "
 		prefs_check_delay="Praviaraj poštu kožnyja "
 		prefs_check_delay2=" sekund"
 		prefs_check_labels="Pravier taksama etykety:"
@@ -5795,7 +5731,6 @@ sub read_translations {
 		prefs_check="メールのチェック"
 		prefs_check_24_hour="24 時間時計"
 		prefs_check_archive="既読もアーカイブに入れる"
-		prefs_check_atom="フィードのアドレス"
 		prefs_check_delay="受信トレイをチェックする周期： "
 		prefs_check_delay2=" 秒"
 		prefs_check_labels="以下のラベルもチェックします："
@@ -5869,7 +5804,6 @@ sub read_translations {
 		prefs_check="检查设置"
 		prefs_check_24_hour="时钟类型为24小时"
 		prefs_check_archive="归档并标记为已读"
-		prefs_check_atom="Feed地址"
 		prefs_check_delay="检查收件箱频率 "
 		prefs_check_delay2=" 秒"
 		prefs_check_labels="同时检查一下标签:"
