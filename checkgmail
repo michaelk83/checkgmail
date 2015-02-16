@@ -534,8 +534,8 @@ print "Parent: Setting up system tray ...\n" if $debug;
 my $tray = Gtk2::TrayIcon->new("gmail");
 my $eventbox = Gtk2::EventBox->new;
 my $ebox2 = Gtk2::EventBox->new;
-my $tray_hbox = Gtk2::HBox->new(0,0);
-$tray_hbox->set_border_width(2);
+my $tray_fixed = Gtk2::Fixed->new;
+$tray_fixed->set_border_width(0);
 
 my $win_notify;
 my ($notify_vbox_b, $notifybox);
@@ -552,16 +552,16 @@ my %issued_h;
 my @labels;
 
 $eventbox->add($ebox2);
-$ebox2->add($tray_hbox);
-$tray_hbox->pack_start($image,0,0,0);
+$ebox2->add($tray_fixed);
+$tray_fixed->put($image,3,3);
 
 # number of new mail messages (use -numbers)
 my $number_label;
 if ($mailno) {
 	$number_label = Gtk2::Label->new;
 	$number_label->hide;
-	$number_label->set_markup("0");
-	$tray_hbox->pack_start($number_label,0,0,2);
+	$number_label->set_markup(" ");
+	$tray_fixed->put($number_label,7,3);
 }
 
 
@@ -1900,7 +1900,8 @@ sub notify {
 	# display number of messages
 	if ($mailno) {
 		# print "setting \"$new_mail\"\n";
-		$number_label->set_markup("$new_mail");
+		$number_label->set_markup("<b>$new_mail</b>");
+		($new_mail < 10) ? $tray_fixed->move($number_label,7,3) : (($new_mail < 100) ? $tray_fixed->move($number_label,2,3) : $tray_fixed->move($number_label,-2,3));
 		$new_mail ? $number_label->show : $number_label->hide;
 		# $new_mail ? $number_label->set_markup("$new_mail") : $number_label->set_markup(" ")
 	}
