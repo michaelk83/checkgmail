@@ -1063,7 +1063,13 @@ sub http_action {
 	my $error;
 
 	# debug http_action, beware this exposes login credentials!
-	print "http_action : address : '$address' method  '$method' label: '$label'\n" unless $silent;
+	my $address_display = $address;
+	if (!$debug) {
+		# Hide personal data from verbose display. During login $address is just "Email=...&Passwd=...'. There's no extra "&" after the password.
+		$address_display =~ s/Email=(.*?)&/Email=******&/;
+		$address_display =~ s/Passwd=[^&]*/Passwd=******/;
+	}
+	print "http_action : address : '$address_display' method  '$method' label: '$label'\n" unless $silent;
 
 	if ($method eq 'POST') {
 		# quick hack to use the POST method for Gmail actions ...
