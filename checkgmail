@@ -34,7 +34,7 @@ use strict;
 # global variables (can't be set global in the BEGIN block)
 my ($version, $silent, $nocrypt, $profile, $disable_monitors_check,
 		$private, $cookies, $two_factor_auth_switch, $popup_size, $hosted, $show_popup_delay,
-		$popup_persistence, $use_kwallet, $nologin, $mailno, $debug);
+		$popup_persistence, $use_kwallet, $nologin, $debug);
 
 # global name of the 3rd party CLI binary used to access kwallet (if kwallet integration is used).
 my $kwalletcli;
@@ -115,10 +115,6 @@ BEGIN {
 				$nocrypt = 1;
 				last };
 
-			/numbers/ && do {
-				$mailno = 1;
-				last };
-
 			/debug/ && do {
 				$debug = 1;
 				$silent = 0;
@@ -127,7 +123,7 @@ BEGIN {
 
 
 			print "CheckGmail v$version\nCopyright © 2005-10 Owen Marshall\n\n";
-			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-two_factor] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-disable-monitors-check] [-numbers] [-h]\n\n";
+			print "usage: checkgmail [-profile=profile_name] [-popup_delay=millisecs] [-hosted=hosted_domain] [-no_cookies] [-two_factor] [-popup_persistence=millisecs] [-private] [-v | -verbose] [-nocrypt] [-disable-monitors-check] [-h]\n\n";
 			exit 1;
 
 		}
@@ -430,6 +426,7 @@ my %pref_variables = (
 	mail_icon => \(my $mail_icon),
 	no_mail_icon => \(my $no_mail_icon),
 	error_icon => \(my $error_icon),
+	show_unread_count => \(my $mailno),
 	popup_delay => \(my $popup_delay),
 	show_popup_delay => \$show_popup_delay,
 	notify_command => \(my $notify_command),
@@ -448,6 +445,7 @@ $time_24 = 0;
 $archive_as_read = 0;
 $gmail_command = 'firefox %u';
 $language = 'English';
+$mailno = 1;
 
 # Global variables
 $HOME = (getpwuid($<))[7];
@@ -555,14 +553,11 @@ $eventbox->add($ebox2);
 $ebox2->add($tray_fixed);
 $tray_fixed->put($image,3,3);
 
-# number of new mail messages (use -numbers)
-my $number_label;
-if ($mailno) {
-	$number_label = Gtk2::Label->new;
-	$number_label->hide;
-	$number_label->set_markup(" ");
-	$tray_fixed->put($number_label,7,3);
-}
+# number of new mail messages.
+my $number_label = Gtk2::Label->new;
+$number_label->hide;
+$number_label->set_markup(" ");
+$tray_fixed->put($number_label,7,3);
 
 
 ########################
@@ -1903,7 +1898,6 @@ sub notify {
 		$number_label->set_markup("<b>$new_mail</b>");
 		($new_mail < 10) ? $tray_fixed->move($number_label,7,3) : (($new_mail < 100) ? $tray_fixed->move($number_label,2,3) : $tray_fixed->move($number_label,-2,3));
 		$new_mail ? $number_label->show : $number_label->hide;
-		# $new_mail ? $number_label->set_markup("$new_mail") : $number_label->set_markup(" ")
 	}
 
 	my @sorted_messages = sort {$b->{time} <=> $a->{time}} @messages;
@@ -3187,7 +3181,7 @@ sub show_prefs {
 		$vbox_tray->set_border_width(6);
 
 		# There's a lot of Gtk2-perl modules included in distros with only
-		# Gtk-2.4 bindings ... the following code needs 2.6 bindings to funtion
+		# Gtk-2.4 bindings ... the following code needs 2.6 bindings to function
 		if (Gtk2->CHECK_VERSION (2, 6, 0)) {
 
 			my $hbox_icon_m = Gtk2::HBox->new (0,6);
@@ -3263,6 +3257,14 @@ sub show_prefs {
 			$vbox_tray->pack_start($button_gtk_label, 1, 1, 2);
 		}
 
+			my $button_show_unread_count = Gtk2::CheckButton->new_with_label($trans{prefs_tray_show_unread_count});
+			$vbox_tray->pack_start($button_show_unread_count, 0, 0, 4);
+			$button_show_unread_count->set_active(1) if ($mailno);
+			$button_show_unread_count->signal_connect(toggled=>sub {
+					$mailno = ($button_show_unread_count->get_active) ? 1 : 0;
+				}
+			);
+
 			$vbox_tray->pack_start (Gtk2::HSeparator->new, 0, 0, 4);
 
 			my $hbox_pdelay = Gtk2::HBox->new (0,0);
@@ -3327,6 +3329,7 @@ sub show_prefs {
 		$gmail_command = $exe_entry->get_text;
 		$notify_command	= $entry_notify->get_text;
 		$nomail_command	= $entry_notify_none->get_text;
+		($mailno && @messages) ? $number_label->show : $number_label->hide;
 
 		if ($use_kwallet) {
 			if ($save_passwd && (defined $passwd) && $passwd ne "") {
@@ -3938,7 +3941,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Personalitza la icona de quan hi ha missatges"
 		prefs_tray_no_mail_icon="Personalitza la icona de quan no hi ha missatges"
 		prefs_tray_pdelay="Mostra finestra emergent de nous missatges durant"
-		prefs_tray_pdelay2="segs" />
+		prefs_tray_pdelay2="segs"
+		prefs_tray_show_unread_count="Mostra recompte de no llegits" />
   <Language name="Dansk"
 		login_err="Fejl: forkert brugernavn eller adgangskode"
 		login_title="Gmail login"
@@ -4011,7 +4015,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Brug selvvalgt 'ny post' ikon"
 		prefs_tray_no_mail_icon="Brug selvvalgt 'ingen post' ikon"
 		prefs_tray_pdelay="Vis nyt brev popup i "
-		prefs_tray_pdelay2=" sekunder" />
+		prefs_tray_pdelay2=" sekunder"
+		prefs_tray_show_unread_count="Vis ulæste tæller" />
   <Language name="Deutsch"
 		login_err="Fehler: Falsches Login oder Passwort"
 		login_title="Google-Mail Login ..."
@@ -4086,7 +4091,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Benutze eigenes Icon für Mail"
 		prefs_tray_no_mail_icon="Benutze eigenes Icon für keine Mail"
 		prefs_tray_pdelay="Zeige Popupfenster für neue Mail für "
-		prefs_tray_pdelay2=" Sekunden" />
+		prefs_tray_pdelay2=" Sekunden"
+		prefs_tray_show_unread_count="Ungelesene zählt anzeigen" />
   <Language name="English"
 		login_err="Error: Incorrect username or password"
 		login_title="Login to Gmail ..."
@@ -4161,7 +4167,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Use custom mail icon"
 		prefs_tray_no_mail_icon="Use custom no mail icon"
 		prefs_tray_pdelay="Show new mail popup for "
-		prefs_tray_pdelay2=" secs" />
+		prefs_tray_pdelay2=" secs"
+		prefs_tray_show_unread_count="Show unread count" />
   <Language name="Español"
 		login_err="Error: Nombre de usuario o contraseña incorreta"
 		login_title="Autentificando en Gmail ..."
@@ -4234,7 +4241,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Personalizar ícono de nuevos mensajes"
 		prefs_tray_no_mail_icon="Personalizar ícono de no hay nuevos mensajes"
 		prefs_tray_pdelay="Mostrar la ventana emergente para nuevos mensajes por "
-		prefs_tray_pdelay2=" segs" />
+		prefs_tray_pdelay2=" segs"
+		prefs_tray_show_unread_count="Mostrar recuento de no leídos" />
   <Language name="Français"
 		login_err="Erreur: Nom d'utilisateur ou mot de passe incorrect"
 		login_title="Connexion à Gmail..."
@@ -4309,7 +4317,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Icône de mail personnalisée"
 		prefs_tray_no_mail_icon="Icône d'absence de mail personnalisée"
 		prefs_tray_pdelay="Afficher un popup de notification durant "
-		prefs_tray_pdelay2=" secs" />
+		prefs_tray_pdelay2=" secs"
+		prefs_tray_show_unread_count="Montrer compte de non lus" />
   <Language name="Hrvatski"
 		login_err="Greška: neispravan korisnik ili lozinka"
 		login_title="Prijava na Gmail ..."
@@ -4382,7 +4391,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Odaberi vlastitu ikonu za novu poruku"
 		prefs_tray_no_mail_icon="Odaberi vlastitu ikonu kada nema poruka"
 		prefs_tray_pdelay="Prikaz prozora za novi mail: "
-		prefs_tray_pdelay2=" sekundi" />
+		prefs_tray_pdelay2=" sekundi"
+		prefs_tray_show_unread_count="Pokaži brojanje nepročitanih" />
   <Language name="Italiano"
 		login_err="Errore: Utente o password errato"
 		login_title="Login a Gmail ..."
@@ -4455,7 +4465,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Utilizza un icona custom per le mail"
 		prefs_tray_no_mail_icon="Utilizza un icona custom per nessuna mail"
 		prefs_tray_pdelay="Mostra il popup di nuove mail per "
-		prefs_tray_pdelay2=" secondi" />
+		prefs_tray_pdelay2=" secondi"
+		prefs_tray_show_unread_count="Mostra il numero di non letti" />
   <Language name="Magyar"
 		login_err="HIBA!: Helytelen felhasználónév, vagy jelszó"
 		login_title="Bejelentkezés a Gmail-be ..."
@@ -4528,7 +4539,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Saját új levél ikon"
 		prefs_tray_no_mail_icon="Saját nincs új levél ikon"
 		prefs_tray_pdelay="Felugró ablak mutatása új levél esetén "
-		prefs_tray_pdelay2=" másodpercig" />
+		prefs_tray_pdelay2=" másodpercig"
+		prefs_tray_show_unread_count="Mutasd olvasatlan számít" />
   <Language name="Nederlands"
 		login_err="Fout: Onjuiste gebruikersnaam of wachtwoord"
 		login_title="inloggen in Gmail ..."
@@ -4601,7 +4613,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Gebruik standaard bericht icoon"
 		prefs_tray_no_mail_icon="Gebruik standaard geen bericht icoon"
 		prefs_tray_pdelay="Laat nieuwe berichten popup zien voor "
-		prefs_tray_pdelay2=" seconden" />
+		prefs_tray_pdelay2=" seconden"
+		prefs_tray_show_unread_count="Toon telling van ongelezen" />
   <Language name="Norsk"
 		login_err="Feil:: Feil brukernavn eller passord"
 		login_title="Gmail login"
@@ -4674,7 +4687,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Bruk selvvalgt 'ny e-post' ikon"
 		prefs_tray_no_mail_icon="Brug selvvalgt 'ingen e-post' ikon"
 		prefs_tray_pdelay="Vis ny e-post popup i "
-		prefs_tray_pdelay2=" sekunder" />
+		prefs_tray_pdelay2=" sekunder"
+		prefs_tray_show_unread_count="Vis antall uleste" />
   <Language name="Polski"
 		login_err="Błąd: Zły login lub hasło"
 		login_title="Logowanie do Gmail ..."
@@ -4747,7 +4761,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Własna ikona informująca o poczcie"
 		prefs_tray_no_mail_icon="Własna ikona informująca o braku poczty"
 		prefs_tray_pdelay="Pokazuj popup przez "
-		prefs_tray_pdelay2=" sekund" />
+		prefs_tray_pdelay2=" sekund"
+		prefs_tray_show_unread_count="Pokaż licznik nieprzeczytanych" />
   <Language name="Português"
 		login_err="Erro: Nome de utilizador e palavra passe incorrecta"
 		login_title="A autenticar no Gmail..."
@@ -4820,7 +4835,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Personalizar ícone de mensagem recebida"
 		prefs_tray_no_mail_icon="Personalizar ícone de nenhuma mensagem"
 		prefs_tray_pdelay="Mostrar popup de nova mensagem durante "
-		prefs_tray_pdelay2=" segs" />
+		prefs_tray_pdelay2=" segs"
+		prefs_tray_show_unread_count="Mostrar contagem de não lidas" />
   <Language name="Português (Brasil)"
 		login_err="Erro: Nome de usuário e senha incorreta"
 		login_title="Autenticando no Gmail..."
@@ -4893,7 +4909,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Personalizar ícone de mensagem recebida"
 		prefs_tray_no_mail_icon="Personalizar ícone de nenhuma mensagem"
 		prefs_tray_pdelay="Mostrar popup de nova mensagem durante "
-		prefs_tray_pdelay2=" segs" />
+		prefs_tray_pdelay2=" segs"
+		prefs_tray_show_unread_count="Mostrar contagem de não lidas" />
   <Language name="Romană"
 		login_err="Eroare: Utilizator sau parolă incorecte"
 		login_title="Autentificare la Gmail ..."
@@ -4966,7 +4983,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Foloseşte iconiţă de mail diferită"
 		prefs_tray_no_mail_icon="Foloseşte iconiţă fară mail diferită"
 		prefs_tray_pdelay="Arată fereastra de notificare mail nou pentru "
-		prefs_tray_pdelay2=" secunde" />
+		prefs_tray_pdelay2=" secunde"
+		prefs_tray_show_unread_count="Arată contează de necitit" />
   <Language name="Slovenčina"
 		login_err="Chyba: Nesprávne prihlasovacie meno alebo heslo"
 		login_title="Prihlasuje sa na Gmail ..."
@@ -5039,7 +5057,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Vlastnú ikonu - pošta"
 		prefs_tray_no_mail_icon="Vlastnú ikonu - žiadna pošta"
 		prefs_tray_pdelay="Zobraziť okno novej pošty počas "
-		prefs_tray_pdelay2=" s" />
+		prefs_tray_pdelay2=" s"
+		prefs_tray_show_unread_count="Zobraziť počet neprečítaných" />
   <Language name="Slovenščina"
 		login_err="Napaka: Napačno uporabniško ime ali geslo"
 		login_title="Prijavi se v Gmail ..."
@@ -5112,7 +5131,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Uporabi ikono po meri za sporočila"
 		prefs_tray_no_mail_icon="Uporabi ikono po meri za brez sporočil"
 		prefs_tray_pdelay="Ob novem sporočilu prikaži okno za "
-		prefs_tray_pdelay2=" sek." />
+		prefs_tray_pdelay2=" sek."
+		prefs_tray_show_unread_count="Prikaži število neprebranih" />
   <Language name="Suomi"
 		login_err="Virhe: Väärä käyttäjätunnus tai salasana"
 		login_title="Kirjaudutaan Gmailiin ..."
@@ -5185,7 +5205,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Käytä omaa uutta postia -kuvaketta"
 		prefs_tray_no_mail_icon="Käytä omaa ei postia -kuvaketta"
 		prefs_tray_pdelay="Näytä ilmoitus saapuneesta postista "
-		prefs_tray_pdelay2=" sekuntia" />
+		prefs_tray_pdelay2=" sekuntia"
+		prefs_tray_show_unread_count="Näytä lukemattomien viestien" />
   <Language name="Svenska"
 		login_err="Fel: Felaktigt användarnamn eller lösenord"
 		login_title="Logga in på Gmail ..."
@@ -5260,7 +5281,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Använd alternativ 'Nya mail'-ikon"
 		prefs_tray_no_mail_icon="Använd alternativ 'Inga nya mail'-ikon"
 		prefs_tray_pdelay="Visa 'Nytt mail'-popup i "
-		prefs_tray_pdelay2=" sekunder" />
+		prefs_tray_pdelay2=" sekunder"
+		prefs_tray_show_unread_count="Visa antal olästa" />
   <Language name="hrvatski"
 		login_err="Greška: pogrešno korisničko ime ili zaporka"
 		login_title="Prijava na Gmail ..."
@@ -5333,7 +5355,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Odaberi vlastitu ikonu za novu poruku"
 		prefs_tray_no_mail_icon="Odaberi vlastitu ikonu kada nema poruka"
 		prefs_tray_pdelay="Prikaži prozorčić s novom porukom na "
-		prefs_tray_pdelay2=" sekundi" />
+		prefs_tray_pdelay2=" sekundi"
+		prefs_tray_show_unread_count="Pokaži brojanje nepročitanih" />
   <Language name="Čeština"
 		login_err="Chyba: Špatné jméno nebo heslo"
 		login_title="Přihlašuji se na Gmail ..."
@@ -5406,7 +5429,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Použít vlastní ikonu pro novou zprávu"
 		prefs_tray_no_mail_icon="Použít vlastní ikonu pro žádnou zprávu"
 		prefs_tray_pdelay="Zobraz popup s novou zprávou "
-		prefs_tray_pdelay2=" vteřin" />
+		prefs_tray_pdelay2=" vteřin"
+		prefs_tray_show_unread_count="Zobrazit počet nepřečtených" />
   <Language name="Русский"
 		login_err="Ошибка: Неверный логин или пароль"
 		login_title="Логин в Google-Mail ..."
@@ -5479,7 +5503,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Использовать свою иконку для новых сообщений"
 		prefs_tray_no_mail_icon="Использовать свою иконку для отсутствия новых сообщений"
 		prefs_tray_pdelay="Показывать оповещение "
-		prefs_tray_pdelay2=" секунд" />
+		prefs_tray_pdelay2=" секунд"
+		prefs_tray_show_unread_count="Показать число непрочитанных" />
   <Language name="தமிழ்"
 		login_err="பிழை: பயனர் பெயரில் அல்லது கடவுச்சொல்லில்"
 		login_title="ஜிமெயிலினுள் நுழை ..."
@@ -5552,7 +5577,8 @@ sub read_translations {
 		prefs_tray_mail_icon="வழக்கமான மடல் குறிப்படத்தைப் பயன்படுத்த"
 		prefs_tray_no_mail_icon="வழக்கமான மடல்-இல்லை குறிப்படத்தைப் பயன்படுத்த"
 		prefs_tray_pdelay="புதிய மடலின் வருகை  அறிவிப்பை"
-		prefs_tray_pdelay2="நொடிகளுக்குக் காட்டுக" />
+		prefs_tray_pdelay2="நொடிகளுக்குக் காட்டுக"
+		prefs_tray_show_unread_count="படிக்காத எண்ணிக்கை காட்டு" />
   <Language name="Македонски"
 		login_err="Грешка: Погрешно корисничко име или лозинка"
 		login_title="Се логирам на Gmail ..."
@@ -5625,7 +5651,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Користи посебна икона за нова пошта"
 		prefs_tray_no_mail_icon="Користи посебна икона за немање нова пошта"
 		prefs_tray_pdelay="Покажи го скокачкото прозорче за нова пошта "
-		prefs_tray_pdelay2=" секунди" />
+		prefs_tray_pdelay2=" секунди"
+		prefs_tray_show_unread_count="Покажи бројот на непрочитани" />
   <Language name="Biełaruskaja łacinka"
 		login_err="Pamyłka: Drenny login albo parol"
 		login_title="Aŭtaryzacyja ŭ Gmail ..."
@@ -5698,7 +5725,8 @@ sub read_translations {
 		prefs_tray_mail_icon="Ułasnaja ikona novaj pošty"
 		prefs_tray_no_mail_icon="Ułasnaja ikona adsutnaści pošty"
 		prefs_tray_pdelay="Pakazvaj vypłyŭnoje vakno ciaham "
-		prefs_tray_pdelay2=" sekund" />
+		prefs_tray_pdelay2=" sekund"
+		prefs_tray_show_unread_count="Паказаць колькасць непрачытаных" />
   <Language name="日本語"
 		login_err="エラー: ユーザーネームまたはパスワードが違います"
 		login_title="Gmail にログインしています ..."
@@ -5771,7 +5799,8 @@ sub read_translations {
 		prefs_tray_mail_icon="カスタムのメール・アイコンを使用"
 		prefs_tray_no_mail_icon="カスタムのメールなし・アイコンを使用"
 		prefs_tray_pdelay="新着メール時のポップアップ表示時間： "
-		prefs_tray_pdelay2=" 秒" />
+		prefs_tray_pdelay2=" 秒"
+		prefs_tray_show_unread_count="未読の番号を見る" />
   <Language name="简体中文"
 		login_err="错误: 错误的用户名或密码"
 		login_title="登录到Gmail ..."
@@ -5844,7 +5873,8 @@ sub read_translations {
 		prefs_tray_mail_icon="个性化邮件图标"
 		prefs_tray_no_mail_icon="个性化无邮件图标"
 		prefs_tray_pdelay="通知显示延迟 "
-		prefs_tray_pdelay2=" 秒" />
+		prefs_tray_pdelay2=" 秒"
+		prefs_tray_show_unread_count="显示未读邮件数" />
 </opt>
 
 EOF
