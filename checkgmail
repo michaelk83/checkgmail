@@ -3350,6 +3350,9 @@ sub show_prefs {
 		set_language();
 		pack_menu();
 		queue_check();
+	} else {
+		# restore previous settings on cancel.
+		read_prefs();
 	}
 
 	$dialog->destroy;
