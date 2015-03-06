@@ -604,7 +604,7 @@ write_prefs();
 # Continue building tray ...
 if ($background) {
 	my ($red, $green, $blue) = convert_hex_to_colour($background);
-	$eventbox->modify_bg('normal', Gtk2::Gdk::Color->new ($red, $green, $blue));
+	$ebox2->modify_bg('normal', Gtk2::Gdk::Color->new ($red, $green, $blue));
 }
 
 $tray->add($eventbox);
@@ -3353,6 +3353,11 @@ sub show_prefs {
 	} else {
 		# restore previous settings on cancel.
 		read_prefs();
+		# restore background color.
+		if ($background) {
+			my ($red, $green, $blue) = convert_hex_to_colour($background);
+			$ebox2->modify_bg('normal', Gtk2::Gdk::Color->new ($red, $green, $blue));
+		}
 	}
 
 	$dialog->destroy;
@@ -3640,7 +3645,7 @@ sub set_bg_colour {
 	my $response = $dialog->run;
 	if ($response eq 'ok') {
 	  		$colour = $colorsel->get_current_color;
-	  		$eventbox->modify_bg('normal', $colour);
+	  		$ebox2->modify_bg('normal', $colour);
 		my $colour_hex =
 			  sprintf("%.2X", ($colour->red  /256))
 				  	. sprintf("%.2X", ($colour->green/256))
