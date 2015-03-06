@@ -519,9 +519,19 @@ load_icon_data();
 
 my ($no_mail_pixbuf, $mail_pixbuf, $error_pixbuf, $star_pixbuf, $nostar_pixbuf);
 my ($custom_no_mail_pixbuf, $custom_mail_pixbuf, $custom_error_pixbuf);
-set_icons();
 
-my $image = Gtk2::Image->new_from_pixbuf($no_mail_pixbuf);
+
+##############
+# Read prefs
+# Must do this before setting the tray icon, in case we're using custom icons. This will also initialize the icon pixbufs.
+#
+
+print "Parent: Reading translations ...\n" if $debug;
+# Read translations if they exist ...
+read_translations();
+
+print "Parent: Reading prefs ...\n" if $debug;
+my $prefs_ok = read_prefs();
 
 
 ##############
@@ -529,6 +539,7 @@ my $image = Gtk2::Image->new_from_pixbuf($no_mail_pixbuf);
 #
 
 print "Parent: Setting up system tray ...\n" if $debug;
+my $image = Gtk2::Image->new_from_pixbuf($no_mail_pixbuf);
 my $tray = Gtk2::TrayIcon->new("gmail");
 my $eventbox = Gtk2::EventBox->new;
 my $ebox2 = Gtk2::EventBox->new;
@@ -560,17 +571,12 @@ $number_label->set_markup(" ");
 $tray_fixed->put($number_label,7,3);
 
 
-########################
-# Read prefs and login
+######################################
+# First time configuration and login
 #
 
-print "Parent: Reading translations ...\n" if $debug;
-# Read translations if they exist ...
-read_translations();
-
-print "Parent: Reading prefs ...\n" if $debug;
 # First time configuration ...
-unless (read_prefs()) {
+unless ($prefs_ok) {
 	show_prefs();
 }
 
