@@ -876,6 +876,80 @@ sub queue_check {
 	return 1;
 }
 
+
+sub cookie_login {
+	# Here we submit the login form to Google and the authorisation cookie gets saved
+
+	# This is only useful when Google's pulling an Error 503 party - it's less efficient
+	# as there's a whole lot of unnecessary data associated with the process that slows
+	# it all down ...
+	{
+		# this loop is necessary as an incorrect login with Gmail's web form doesn't return a 401
+		# So we simply check for the Gmail_AT cookie as confirmation of a successful login
+		$http_status->enqueue($trans{notify_login});
+
+		my $URI_user = URI_escape($user);
+		my $URI_passwd;
+		# The script simulates a browser login to get the cookies required to interact with the inbox (e.g. mark as read etc...).
+		# Therefore, if two-factor authentication is used, the web password _must_ be used here.
+		# Otherwise the general password is used if two-factor is not used.
+		if ($use_two_factor_auth) {
+			$URI_passwd = URI_escape($web_passwd_decrypt);
+		} else {
+			$URI_passwd = URI_escape($passwd_decrypt);
+		}
+
+		# clumsy error detection code uses this variable to differentiate between unable to
+		# connect and unable to login - the Gmail login provides no unauthorised code if unsuccessful
+		my $error;
+
+		# Thanks to that wonderful Firefox extension LiveHTTPHeaders for
+		# deciphering the login form! :)
+
+		# now using the same call for both hosted and non-hosted accounts. the small differences between the two will be handled there.
+		$error = http_action("Email=$URI_user&Passwd=$URI_passwd", "LOGIN");
+
+		$cookie_jar->scan(\&scan_at);
+
+		unless ($gmail_at) {
+			unless ($error) {
+				# in reality a code-thrown 401 error...
+				$http_status->enqueue("Error : 401 Unauthorized");
+				$error_block->down;
+			} else {
+				# simple block to prevent checkgmail hogging CPU if not connected!
+				sleep 30;
+			}
+
+			redo;
+		}
+	}
+
+	print "Logged in ... AT = $gmail_at\n" unless $silent;
+
+	# persist smsv cookie if required
+	#################################
+	$two_factor_trust_cookie_decrypt = $gmail_smsv;
+
+	# If kwallet integration is available, and password storage is requested, store it in KWallet. Otherwise encrypt it locally and save it in the preferences.
+	if ($save_two_factor_trust_cookie) {
+		if ((defined $two_factor_trust_cookie_decrypt) && $two_factor_trust_cookie_decrypt ne "") {
+			if ($use_kwallet) {
+				store_auth_token_in_kwallet($kwallet_two_factor_trust_cookie_key, $two_factor_trust_cookie_decrypt);
+			} else {
+				$two_factor_trust_cookie = encrypt_real($two_factor_trust_cookie_decrypt);
+			}
+		}
+
+		handle_auth_token_preference($save_two_factor_trust_cookie, "two_factor_trust_cookie", $two_factor_trust_cookie);
+
+		if ($save_two_factor_trust_cookie) {
+			write_prefs();
+		}
+	}
+}
+
+
 sub http_check {
 	# Threaded process for sending HTTP requests ...
 	print "Child: Checking thread now starting ... waiting for semaphore to continue\n" if $debug;
@@ -912,76 +986,7 @@ sub http_check {
 
 		$ua->cookie_jar($cookie_jar);
 
-		# Here we submit the login form to Google and the authorisation cookie gets saved
-
-		# This is only useful when Google's pulling an Error 503 party - it's less efficient
-		# as there's a whole lot of unnecessary data associated with the process that slows
-		# it all down ...
-
-		{
-			# this loop is necessary as an incorrect login with Gmail's web form doesn't return a 401
-			# So we simply check for the Gmail_AT cookie as confirmation of a successful login
-			$http_status->enqueue($trans{notify_login});
-
-			my $URI_user = URI_escape($user);
-			my $URI_passwd;
-			# The script simulates a browser login to get the cookies required to interact with the inbox (e.g. mark as read etc...).
-			# Therefore, if two-factor authentication is used, the web password _must_ be used here.
-			# Otherwise the general password is used if two-factor is not used.
-			if ($use_two_factor_auth) {
-				$URI_passwd = URI_escape($web_passwd_decrypt);
-			} else {
-				$URI_passwd = URI_escape($passwd_decrypt);
-			}
-
-			# clumsy error detection code uses this variable to differentiate between unable to
-			# connect and unable to login - the Gmail login provides no unauthorised code if unsuccessful
-			my $error;
-
-			# Thanks to that wonderful Firefox extension LiveHTTPHeaders for
-			# deciphering the login form! :)
-
-			# now using the same call for both hosted and non-hosted accounts. the small differences between the two will be handled there.
-			$error = http_action("Email=$URI_user&Passwd=$URI_passwd", "LOGIN");
-
-			$cookie_jar->scan(\&scan_at);
-
-			unless ($gmail_at) {
-				unless ($error) {
-					# in reality a code-thrown 401 error...
-					$http_status->enqueue("Error : 401 Unauthorized");
-					$error_block->down;
-				} else {
-					# simple block to prevent checkgmail hogging CPU if not connected!
-					sleep 30;
-				}
-
-				redo;
-			}
-		}
-
-		print "Logged in ... AT = $gmail_at\n" unless $silent;
-
-		# persist smsv cookie if required
-		#################################
-		$two_factor_trust_cookie_decrypt = $gmail_smsv;
-
-		# If kwallet integration is available, and password storage is requested, store it in KWallet. Otherwise encrypt it locally and save it in the preferences.
-		if ($save_two_factor_trust_cookie) {
-			if ((defined $two_factor_trust_cookie_decrypt) && $two_factor_trust_cookie_decrypt ne "") {
-				if ($use_kwallet) {
-					store_auth_token_in_kwallet($kwallet_two_factor_trust_cookie_key, $two_factor_trust_cookie_decrypt);
-				} else {
-					$two_factor_trust_cookie = encrypt_real($two_factor_trust_cookie_decrypt);
-				}
-			}
-
-			handle_auth_token_preference($save_two_factor_trust_cookie, "two_factor_trust_cookie", $two_factor_trust_cookie);
-
-			if ($save_two_factor_trust_cookie) {
-				write_prefs();
-			}
-		}
+		&cookie_login;
 	}
 
 	print "http_check : Entering while loop...\n" unless $silent;
@@ -1324,14 +1329,21 @@ sub http_action {
 	my $response = $ua->request($req);
 	if ($response->is_error) {
 		(my $code, $error) = format_error_message($response);
-		$http_status->enqueue($error);
 
-		# Incorrect username/password??
-		if ($code == 401) {
-			# Set a semaphore block to prevent multiple incorrect logins
-			# This is probably unneccessary because of the locked variables in the Login dialogue
-			# ... still, doesn't hurt to be careful ... :)
-			$error_block->down;
+		# At 2015-03-17, sessions started to time out every 5 minutes
+		# or so, making Gmail return 401 status and requiring a new
+		# login procedure.  This catches such timeouts and logs in
+		# again automatically, without requiring confirmation in the
+		# login credentials window.
+		#
+		# This will not override a user giving e.g. incorrect
+		# credentials, which will still halt, showing the login
+		# credentials window again as expected.
+		if ($code == 401 && $cookies) {
+			print "Cookies timed out! Sending login credentials once more to refresh ...\n" unless $silent;
+			&cookie_login;
+		} else {
+			$http_status->enqueue($error);
 		}
 
 		return 0;
