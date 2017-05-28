@@ -1,0 +1,81 @@
+.TH "CheckGmail" 1
+
+.SH NAME
+CheckGmail \- system tray applet to check a Gmail account for new mail
+
+.SH SYNOPSIS
+.B checkgmail
+[-profile] [-hosted] [-popup_delay] [-no_cookies] [-private] [-v | -verbose] [-nocrypt] [-numbers] [-update] [-h]
+
+.SH DESCRIPTION
+CheckGmail is an alternative Gmail Notifier for Linux and other *nix systems. It is fast, secure and uses minimal bandwidth via the use of Atom feeds.
+.PP
+CheckGmail is a system tray application that checks a Gmail account for new mail. When new mail is present the tray icon changes, an optional animated popup is displayed and a tooltip displays the number and details of new messages. Configuration is GUI-based and the application is designed to be simple, elegant and unobtrusive. 
+.PP
+CheckGmail aims to be relatively secure in terms of password storage.  Combined with 
+.BR Crypt::Simple (3pm)
+the program provides the option of either encrypting the saved password information or - for maximum security - re-entering your password each time the application is run. If you decide to save the password, it is encrypted using a passphrase generated from machine-unique information (the eth0 MAC address and/or uname system information). Encrypting the password prevents both casual reading of plain text passwords on your machine, but more importantly allows the CheckGmail config file in your home directory to be stored securely on external backups.
+.PP
+For the password encryption function, CheckGmail depends on the Perl module 
+.BR Crypt::Simple (3pm)
+CheckGmail will save passwords as plain text if this module (or associated modules) is not present on the system.
+
+.SH OPTIONS
+.TP
+.B \-profile=[profile_name]
+Using this switch causes CheckGmail to read preferences from a file named prefs-[profile_name] in ~/.checkgmail - thus allowing multiple instances of CheckGmail to be run to check different Gmail accounts.
+
+.TP
+.B \-hosted=[Gmail hosted domain]
+Allows checkgmail to work for Gmail hosted domains.  E.g. if your hosted domain is test.net, run the program with -hosted=test.net   Once run, the -hosted flag is not required again for that profile.
+
+N.B: You will need to delete the Atom feed address from your preferences or use a new profile before using this option for the first time.  Following a change in the Gmail login code for hosted domains, this option does not appear to be compatible with the -no_cookies method of checking mail.
+
+.TP
+.B \-numbers
+Shows the number of unread messages beside the tray icon
+
+.TP
+.B \-update
+Updates checkgmail to the latest SVN version.  Please use this before reporting bugs (official releases don't happen very often, I'm afraid!)
+
+.TP
+.B \-popup_delay=[time in millisecs]
+Sets the time taken between the mouse entering the system tray icon and the tooltip being displayed.  Default is 250 millisecs as of version 1.10 (previous versions used no delay).
+
+.TP
+.B \-no_cookies
+Uses the old Atom feed retrieval method (default in versions 1.7.2 and earlier) of sending the username and password across https.  The alternative, and currently default method, is to login to Gmail, save the authentication cookies, and then retrieve the Atom feeds without requiring any further authentication - this method has the benefit of allowing various actions to be carried out upon new messages received, such as deleting, marking as read, archiving or reporting spam.
+
+.TP
+.B \-private
+Prevents the display of message details in the popup - only the number of new messages will be displayed.
+
+.TP
+.B \-v | \-verbose
+Causes CheckGmail to print details of mail checking and mail contents to STDOUT
+.TP
+.B \-nocrypt
+Disables the use of Crypt::Simple to encrypt saved password information - passwords will be saved as plain text.
+.TP
+.B \-h
+Prints a usage message.
+
+.SH ENVIRONMENT
+.B HTTPS_PROXY
+.RS
+Setting the HTTPS_PROXY environment variable will cause CheckGmail to use the specified proxy server when checking for new mail.
+
+.SH FILES
+.I ~/.checkgmail/prefs.xml
+.RS
+User configuration file
+.RE
+
+.I ~/.checkgmail/lang.xml
+.RS
+Language translations
+.RE
+
+.SH AUTHOR
+Owen Marshall <owenjm at the email provider which this utility checks>
