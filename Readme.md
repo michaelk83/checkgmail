@@ -1,5 +1,5 @@
 Checkgmail
-Copyright © 2005-6, Owen Marshall
+Copyright &copy; 2005-6, Owen Marshall
 
 
 About
@@ -45,13 +45,13 @@ And to be able to use custom icons for the mail status, you'll need:
 
 Ubuntu users (and others) may find the following web HOWTO useful, which details and simplifies the install process nicely:
 
-	http://ubuntuforums.org/printthread.php?t=60418
+http://ubuntuforums.org/printthread.php?t=60418
 
 Note that if you run CheckGmail from the commandline, it will print out a list of required modules not present on your system.
 
-As of v0.9.5, the default mail images have now been embedded in the script, so you can happily install CheckGmail anywhere on your system.  You probably want to stick it in a directory in your $PATH ...
+As of v0.9.5, the default mail images have now been embedded in the script, so you can happily install CheckGmail anywhere on your system.  You probably want to stick it in a directory in your `$PATH` ...
 
-CheckGmail stores the user settings in the file ".checkgmail/prefs" in your home directory.  This is a simple text file, and any of the values (such as the tray background colour) can be changed by editing this file, as well as by using the nice GUI Preferences dialogue.
+CheckGmail stores the user settings in the file `.checkgmail/prefs` in your home directory.  This is a simple text file, and any of the values (such as the tray background colour) can be changed by editing this file, as well as by using the nice GUI Preferences dialogue.
 
 
 Contact
@@ -59,6 +59,6 @@ Contact
 
 Contact the author at
 
-	owenjm@users.sourceforge.net
+owenjm@users.sourceforge.net
 
 Suggestions, feedback, further ideas on password protection and security, feature requests and bug reports are welcome.
